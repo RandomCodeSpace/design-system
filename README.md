@@ -17,13 +17,25 @@ npm install @ossrandom/design-system
 pnpm add @ossrandom/design-system
 ```
 
-From the GitHub Packages mirror (same package, same scope, alternate registry):
+From the GitHub Packages mirror — **note the different scope**:
 
 ```bash
-npm install @ossrandom/design-system --registry=https://npm.pkg.github.com
+# .npmrc in the consuming project
+@randomcodespace:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=<PAT with read:packages>
 ```
 
-Both registries publish the same name (`@ossrandom/design-system`); the mirror is published from the release workflow using the auto-provided `GITHUB_TOKEN`.
+```bash
+npm install @randomcodespace/design-system
+```
+
+> **Why two scopes?** GitHub Packages requires the npm scope to match the
+> repo owner (`RandomCodeSpace` → `@randomcodespace`), so the GHP mirror
+> publishes as `@randomcodespace/design-system`. The canonical npm package
+> stays `@ossrandom/design-system`. Same source, same version, same
+> contents — only the package name differs. Imports inside your code
+> match whichever one you installed (e.g. `from "@randomcodespace/design-system"`
+> if you pulled from GHP).
 
 ## Usage
 

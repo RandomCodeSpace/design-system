@@ -1,10 +1,11 @@
 name: Release
 
-# Triggered on SemVer tag pushes (v1.2.3, v1.2.3-rc.1, …) — and manually via Actions UI.
+# Manual-only for now. Re-enable the tag-push trigger once NPM_TOKEN is set
+# and you want SemVer tags (v1.2.3) to fire a dual-publish automatically.
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  # push:
+  #   tags:
+  #     - "v*.*.*"
   workflow_dispatch:
     inputs:
       tag:

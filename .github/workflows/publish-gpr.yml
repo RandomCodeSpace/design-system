@@ -1,0 +1,91 @@
+name: Publish · GitHub Packages
+
+# Manual-trigger pipeline that publishes the package to GitHub Packages only.
+# Uses the auto-provided GITHUB_TOKEN — no secret setup required.
+# Run from Actions → "Publish · GitHub Packages" → Run workflow.
+#
+# IMPORTANT: GitHub Packages requires the npm scope to match the repo owner.
+# The committed package.json uses scope `@ossrandom` (the canonical npm name);
+# this workflow rewrites both `name` and `publishConfig.registry` in the
+# runner so the GHP publish goes out as `@randomcodespace/design-system`.
+# The committed file is unchanged.
+#
+# Sibling workflow `release.yml` is the canonical npm dual-publish; use it
+# once NPM_TOKEN is configured.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or commit SHA to publish (default: current branch)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-gpr
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build & publish to GitHub Packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@randomcodespace"
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Read package version
+        id: read
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Rewrite name + publishConfig for GitHub Packages
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p  = JSON.parse(fs.readFileSync('package.json','utf8'));
+            p.name = '@randomcodespace/design-system';
+            p.publishConfig = { access: 'public', registry: 'https://npm.pkg.github.com' };
+            fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
+          "
+
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          {
+            echo "### Published"
+            echo ""
+            echo "- **Package:** \`@randomcodespace/design-system@${{ steps.read.outputs.version }}\`"
+            echo "- **Registry:** https://npm.pkg.github.com"
+            echo "- **Ref:** \`${{ github.event.inputs.ref || github.ref }}\`"
+            echo ""
+            echo "View in the **Packages** tab on the repo home page."
+          } >> "$GITHUB_STEP_SUMMARY"

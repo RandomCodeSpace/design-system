@@ -279,6 +279,12 @@ code { font-family: var(--font-mono); }
   border-bottom: 1px solid var(--border-1);
   font-size: 13px;
 }
+@media (max-width: 720px) {
+  .site-header { padding: 0 14px; gap: 12px; }
+  .site-gh > span:not(.site-gh-icon) { display: none; }
+  .site-gh { padding: 6px 8px; }
+  .site-header-right { gap: 8px; }
+}
 .site-brand { display: flex; align-items: center; gap: 10px; color: var(--fg-1); text-decoration: none; flex-shrink: 0; }
 .site-brand:hover { opacity: 1; color: var(--fg-1); }
 .site-brand-mark {
@@ -349,6 +355,9 @@ code { font-family: var(--font-mono); }
 
 /* ── Page-content wrapper ────────────────────────────────────────────── */
 .page-wrap { max-width: 1080px; margin: 0 auto; padding: 56px 24px 80px; }
+@media (max-width: 720px) {
+  .page-wrap { padding: 32px 16px 56px; }
+}
 .page-back {
   display: inline-block; margin-bottom: 24px; color: var(--fg-3);
   font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; text-decoration: none;
@@ -361,8 +370,13 @@ code { font-family: var(--font-mono); }
 }
 .eyebrow::before { content: ""; width: 20px; height: 1px; background: var(--border-2); }
 h1.page-h1 { font-size: 56px; font-weight: 600; letter-spacing: -0.032em; line-height: 1.04; margin: 0 0 16px; }
-@media (max-width: 720px) { h1.page-h1 { font-size: 36px; } }
+h1.page-h1 br { display: inline; }
+@media (max-width: 720px) {
+  h1.page-h1 { font-size: 32px; line-height: 1.1; }
+  h1.page-h1 br { display: none; }
+}
 p.lede { color: var(--fg-2); font-size: 16px; line-height: 1.55; margin: 0 0 32px; max-width: 64ch; }
+@media (max-width: 720px) { p.lede { font-size: 15px; margin-bottom: 24px; } }
 
 .section { margin: 0 0 56px; }
 .section > h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.014em; margin: 0 0 6px; }
@@ -394,8 +408,12 @@ a.card .meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg
   padding: 12px 16px; margin: 0 0 56px;
   font-family: var(--font-mono); font-size: 13px; color: var(--fg-1);
   display: flex; align-items: center; gap: 12px;
+  overflow-x: auto; white-space: nowrap;
 }
 .install .install-prefix { color: var(--fg-3); }
+@media (max-width: 720px) {
+  .install { font-size: 12px; padding: 10px 14px; margin-bottom: 32px; }
+}
 
 .btn-primary {
   display: inline-block; padding: 8px 14px;
@@ -424,6 +442,7 @@ function renderDocsCss() {
   align-items: stretch;
 }
 .docs-aside-toggle { display: none; }
+.docs-aside-backdrop { display: none; }
 
 @media (max-width: 880px) {
   .docs-layout { grid-template-columns: 1fr; }
@@ -438,25 +457,29 @@ function renderDocsCss() {
     box-shadow: 0 12px 28px rgba(0,0,0,0.18);
   }
   .docs-aside.open { transform: translateX(0); }
+  .docs-aside-backdrop {
+    display: block;
+    position: fixed; inset: 52px 0 0 0; z-index: 85;
+    background: color-mix(in srgb, var(--bg-0) 60%, transparent);
+    opacity: 0; pointer-events: none;
+    transition: opacity 220ms cubic-bezier(0.25,1,0.5,1);
+  }
+  .docs-aside-backdrop.open { opacity: 1; pointer-events: auto; }
   .docs-aside-toggle {
-    display: inline-flex; align-items: center; gap: 8px;
+    display: inline-flex; align-items: center; gap: 10px;
     position: sticky; top: 52px; z-index: 80;
-    padding: 10px 16px; height: 40px;
+    padding: 0 16px; height: 44px;
     background: var(--bg-0); border: none;
     border-bottom: 1px solid var(--border-1);
     color: var(--fg-1); font-family: var(--font-mono); font-size: 11.5px;
     letter-spacing: 0.04em; text-transform: uppercase;
     cursor: pointer; width: 100%; justify-content: flex-start;
   }
+  .docs-aside-toggle .hb-stack {
+    display: inline-flex; flex-direction: column; gap: 3px;
+  }
   .docs-aside-toggle .hb {
     display: block; width: 16px; height: 1.5px; background: var(--fg-2);
-    margin-right: 0;
-  }
-  .docs-aside-toggle .hb + .hb { margin-top: 3px; }
-  .docs-aside-toggle .hb:nth-of-type(1),
-  .docs-aside-toggle .hb:nth-of-type(2),
-  .docs-aside-toggle .hb:nth-of-type(3) {
-    display: inline-block; vertical-align: middle;
   }
 }
 .docs-aside {
@@ -565,8 +588,9 @@ function renderDocsCss() {
   position: relative;
   min-height: 80px;
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  overflow-x: auto;
 }
-@media (max-width: 720px) { .demo-render { padding: 24px 18px; } }
+@media (max-width: 720px) { .demo-render { padding: 24px 16px; } }
 .demo-meta {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 16px; padding: 14px 18px;
@@ -840,8 +864,15 @@ function renderAppsIndex() {
 <style>
   .apps-page { max-width: 1200px; }
   .apps-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
     gap: 24px; margin: 48px 0 32px;
+  }
+  @media (max-width: 720px) {
+    .apps-grid { gap: 16px; margin: 28px 0 24px; }
+    .app-frame { height: 180px; }
+    .app-meta { padding: 14px 16px 16px; }
+    .app-name { font-size: 16px; }
+    .app-desc { font-size: 13px; }
   }
   a.app-card {
     display: block; background: var(--bg-1); border: 1px solid var(--border-1); border-radius: 6px;
@@ -1022,8 +1053,9 @@ function renderComponentPage(name) {
     <div class="filter"><input type="search" placeholder="Filter components…" id="docs-filter" autocomplete="off" spellcheck="false"></div>
     ${renderSidebar(name)}
   </aside>
+  <div class="docs-aside-backdrop" id="docs-aside-backdrop" aria-hidden="true"></div>
   <button type="button" class="docs-aside-toggle" id="docs-aside-toggle" aria-label="Toggle sidebar" aria-controls="docs-aside" aria-expanded="false">
-    <span class="hb"></span><span class="hb"></span><span class="hb"></span>
+    <span class="hb-stack"><span class="hb"></span><span class="hb"></span><span class="hb"></span></span>
     <span>Components</span>
   </button>
   <main class="docs-main">
@@ -1111,17 +1143,21 @@ function renderComponentPage(name) {
           });
         });
       });
-      // Sidebar drawer toggle (mobile)
+      // Sidebar drawer toggle (mobile) with backdrop
       var asideToggle = document.getElementById('docs-aside-toggle');
       var aside = document.getElementById('docs-aside');
+      var backdrop = document.getElementById('docs-aside-backdrop');
+      function setAside(open) {
+        aside.classList.toggle('open', open);
+        if (backdrop) backdrop.classList.toggle('open', open);
+        asideToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        document.body.style.overflow = open ? 'hidden' : '';
+      }
       if (asideToggle && aside) {
-        asideToggle.addEventListener('click', function () {
-          var open = aside.classList.toggle('open');
-          asideToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        });
-        aside.addEventListener('click', function (e) {
-          if (e.target.tagName === 'A') aside.classList.remove('open');
-        });
+        asideToggle.addEventListener('click', function () { setAside(!aside.classList.contains('open')); });
+        aside.addEventListener('click', function (e) { if (e.target.tagName === 'A') setAside(false); });
+        if (backdrop) backdrop.addEventListener('click', function () { setAside(false); });
+        window.addEventListener('keydown', function (e) { if (e.key === 'Escape' && aside.classList.contains('open')) setAside(false); });
       }
       // Filter
       var input = document.getElementById('docs-filter');

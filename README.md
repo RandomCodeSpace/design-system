@@ -4,8 +4,11 @@
 
 Signal Red on Cod Gray. Inter for UI, JetBrains Mono for code. Built for self-hosted developer tooling.
 
+**📖 [Live docs · live previews · playground](https://randomcodespace.github.io/design-system/)** — auto-generated component reference at `randomcodespace.github.io/design-system`.
+
 [![CI](https://github.com/RandomCodeSpace/design-system/actions/workflows/ci.yml/badge.svg)](https://github.com/RandomCodeSpace/design-system/actions/workflows/ci.yml)
 [![Release](https://github.com/RandomCodeSpace/design-system/actions/workflows/release.yml/badge.svg)](https://github.com/RandomCodeSpace/design-system/actions/workflows/release.yml)
+[![Pages](https://github.com/RandomCodeSpace/design-system/actions/workflows/pages.yml/badge.svg)](https://randomcodespace.github.io/design-system/)
 
 ## Install
 

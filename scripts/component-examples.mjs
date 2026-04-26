@@ -229,6 +229,21 @@ function defaultDemo(name, iface, aliases) {
   return { title: "Default", code: `<${name}${attrs.length ? " " + attrs.join(" ") : ""} />` };
 }
 
+// Build the JSX for one instance of `name` with a single override prop set,
+// keeping all required props populated so the runtime doesn't throw.
+function instance(name, iface, aliases, overrideKey, overrideVal, label, indent = "  ") {
+  const { attrs, hasChildren } = requiredAttrs(name, iface, aliases);
+  // Replace any existing attr with the override (e.g. swap an existing
+  // size= / variant= filled in by requiredAttrs).
+  const filtered = attrs.filter((a) => !a.startsWith(overrideKey + "=") && !a.startsWith(overrideKey + "{"));
+  filtered.push(`${overrideKey}="${overrideVal}"`);
+  const attrStr = filtered.length ? "\n" + indent + "  " + filtered.join("\n" + indent + "  ") + "\n" + indent : " ";
+  if (hasChildren) {
+    return `${indent}<${name}${attrStr}>${label}</${name}>`;
+  }
+  return `${indent}<${name}${attrStr}/>`;
+}
+
 function variantsDemo(name, iface, aliases) {
   const candidates = ["variant", "tone", "severity", "kind"];
   const prop = iface.props.find((p) => candidates.includes(p.name) && isLiteralUnion(p.type, aliases));
@@ -236,46 +251,45 @@ function variantsDemo(name, iface, aliases) {
   const values = unionLiterals(prop.type, aliases);
   if (values.length < 2) return null;
   const titleMap = { variant: "Variants", tone: "Tones", severity: "Severities", kind: "Kinds" };
-  // For Alert: include title and body
   if (name === "Alert" && prop.name === "severity") {
     const cards = values.map((v) => `  <Alert severity="${v}" title="${capitalize(v)}">Body of the ${v} alert.</Alert>`).join("\n");
-    return {
-      title: "Severities",
-      code: `<Space size="sm" direction="vertical">\n${cards}\n</Space>`,
-    };
+    return { title: "Severities", code: `<Space size="sm" direction="vertical">\n${cards}\n</Space>` };
   }
-  // For Badge: use children = value
   if (name === "Badge") {
     const items = values.map((v) => `  <Badge tone="${v}">${v}</Badge>`).join("\n");
     return { title: "Tones", code: `<Space size="sm">\n${items}\n</Space>` };
   }
-  // For StatusDot: render with label
   if (name === "StatusDot") {
     const items = values.map((v) => `  <span><StatusDot tone="${v}" /> ${capitalize(v)}</span>`).join("\n");
     return { title: "Tones", code: `<Space size="md" direction="vertical">\n${items}\n</Space>` };
   }
-  // For ChatMessage role: show roles
-  // Default: render N components in a Space
-  const items = values.map((v) => `  <${name} ${prop.name}="${v}">${capitalize(v)}</${name}>`).join("\n");
+  const items = values.map((v) => instance(name, iface, aliases, prop.name, v, capitalize(v))).join("\n");
   return { title: titleMap[prop.name] || "Variants", code: `<Space size="sm">\n${items}\n</Space>` };
 }
 
-function sizesDemo(name, iface) {
+function sizesDemo(name, iface, aliases) {
   const sizeProp = iface.props.find((p) => p.name === "size" && (p.type === "Size" || p.type === "Size | undefined"));
   if (!sizeProp) return null;
-  return {
-    title: "Sizes",
-    code: `<Space size="sm">\n  <${name} size="xs">XS</${name}>\n  <${name} size="sm">SM</${name}>\n  <${name} size="md">MD</${name}>\n  <${name} size="lg">LG</${name}>\n</Space>`,
-  };
+  const sizes = ["xs", "sm", "md", "lg"];
+  const items = sizes.map((s) => instance(name, iface, aliases, "size", s, s.toUpperCase())).join("\n");
+  return { title: "Sizes", code: `<Space size="sm">\n${items}\n</Space>` };
 }
 
-function statesDemo(name, iface) {
+function statesDemo(name, iface, aliases) {
   const hasDisabled = iface.props.some((p) => p.name === "disabled" && /\bboolean\b/.test(p.type));
   const hasLoading = iface.props.some((p) => p.name === "loading" && /\bboolean\b/.test(p.type));
   if (!hasDisabled && !hasLoading) return null;
-  const parts = [`  <${name}>Default</${name}>`];
-  if (hasDisabled) parts.push(`  <${name} disabled>Disabled</${name}>`);
-  if (hasLoading) parts.push(`  <${name} loading>Loading…</${name}>`);
+  const { attrs, hasChildren } = requiredAttrs(name, iface, aliases);
+  const wrap = (extra, label) => {
+    const all = [...attrs, ...extra];
+    const attrStr = all.length ? "\n  " + all.join("\n  ") + "\n  " : " ";
+    return hasChildren
+      ? `  <${name}${attrStr}>${label}</${name}>`
+      : `  <${name}${attrStr}/>`;
+  };
+  const parts = [wrap([], "Default")];
+  if (hasDisabled) parts.push(wrap(["disabled"], "Disabled"));
+  if (hasLoading) parts.push(wrap(["loading"], "Loading…"));
   return { title: "States", code: `<Space size="sm">\n${parts.join("\n")}\n</Space>` };
 }
 
@@ -391,9 +405,9 @@ export function generateDemos(name, iface, opts) {
   demos.push(defaultDemo(name, iface, aliases));
   const v = variantsDemo(name, iface, aliases);
   if (v) demos.push(v);
-  const s = sizesDemo(name, iface);
+  const s = sizesDemo(name, iface, aliases);
   if (s) demos.push(s);
-  const st = statesDemo(name, iface);
+  const st = statesDemo(name, iface, aliases);
   if (st) demos.push(st);
 
   return demos;

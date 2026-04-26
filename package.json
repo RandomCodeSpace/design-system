@@ -49,8 +49,11 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json && node -e \"require('fs').writeFileSync('dist/styles.css', require('fs').readFileSync('colors_and_type.css','utf8') + '\\n' + require('fs').readFileSync('src/styles.css','utf8'))\"",
+    "build:site": "node scripts/build-site.mjs _site",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium",
     "preview": "echo 'Open preview/responsive-check.html in a browser' ",
     "prepublishOnly": "pnpm run typecheck && pnpm run build",
     "release": "pnpm version"
@@ -61,10 +64,13 @@
   },
   "devDependencies": {
     "@babel/standalone": "^7.29.0",
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^22.0.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "esbuild": "^0.24.0",
     "eslint": "^9.0.0",
     "jsdom": "^22.1.0",
     "typescript": "^5.6.0",

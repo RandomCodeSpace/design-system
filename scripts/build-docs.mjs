@@ -263,6 +263,7 @@ html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 body { margin: 0; background: var(--bg-0); color: var(--fg-1); font-family: var(--font-sans); }
 body[data-page] { display: flex; flex-direction: column; min-height: 100vh; }
 body[data-page] > main, body[data-page] > .layout { flex: 1; }
+@media (max-width: 720px) { body { overflow-x: clip; } html { overflow-x: clip; } }
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { opacity: 0.85; }

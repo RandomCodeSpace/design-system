@@ -1,0 +1,83 @@
+<!doctype html>
+<html data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="stylesheet" href="_card.css?v=6">
+<style>
+  .btn{font-family:var(--font-sans);font-size:13px;font-weight:500;border-radius:4px;padding:7px 12px;border:1px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:1;transition:background 140ms cubic-bezier(0.25,1,0.5,1);}
+  .btn-primary{background:#E60000;color:#FFFFFF;}
+  .btn-primary.hover{background:#C20000;}
+  .btn-primary.press{background:#9E0000;}
+  .btn-secondary{background:#FFFFFF;color:#1C1C1C;border-color:rgba(28,28,28,0.14);}
+  .btn-secondary.hover{background:#F5F5F5;border-color:rgba(28,28,28,0.22);}
+  .btn-ghost{background:transparent;color:#3D3D3D;}
+  .btn-ghost.hover{background:#F5F5F5;}
+  .btn-dark{background:#1C1C1C;color:#FFFFFF;}
+  .btn-dark.hover{background:#2B2B2B;}
+  .btn-disabled{background:#F5F5F5;color:#A6A6A6;cursor:not-allowed;}
+  .row{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid rgba(28,28,28,0.08);border-radius:4px;background:#FFFFFF;}
+  .row-head{display:flex;align-items:baseline;justify-content:space-between;}
+  .row-title{font-family:var(--font-sans);font-size:12px;font-weight:500;color:#1C1C1C;}
+  .row-meta{font-family:var(--font-mono);font-size:10px;letter-spacing:0.04em;color:#A6A6A6;}
+  .row-btns{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .state{font-family:var(--font-mono);font-size:9px;color:#A6A6A6;letter-spacing:0.04em;text-transform:uppercase;width:52px;}
+  .btn.sm{font-size:12px;padding:5px 9px;}
+  .btn.lg{font-size:14px;padding:9px 16px;}
+</style></head>
+<body>
+<div class="card">
+  <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#5A5A5A;">Buttons · core palette</div>
+
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <div class="row">
+      <div class="row-head"><div class="row-title">Primary · Signal Red</div><div class="row-meta">bg #E60000 · fg #FFFFFF</div></div>
+      <div class="row-btns">
+        <span class="state">default</span>
+        <button class="btn btn-primary">Open account</button>
+        <span class="state">hover</span>
+        <button class="btn btn-primary hover">Open account</button>
+        <span class="state">press</span>
+        <button class="btn btn-primary press">Open account</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-head"><div class="row-title">Dark · Cod Gray</div><div class="row-meta">bg #1C1C1C · fg #FFFFFF</div></div>
+      <div class="row-btns">
+        <span class="state">default</span>
+        <button class="btn btn-dark">Continue</button>
+        <span class="state">hover</span>
+        <button class="btn btn-dark hover">Continue</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-head"><div class="row-title">Secondary</div><div class="row-meta">bg #FFFFFF · border rgba(28,28,28,0.14)</div></div>
+      <div class="row-btns">
+        <span class="state">default</span>
+        <button class="btn btn-secondary">Read more</button>
+        <span class="state">hover</span>
+        <button class="btn btn-secondary hover">Read more</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-head"><div class="row-title">Ghost · disabled</div><div class="row-meta">bg transparent</div></div>
+      <div class="row-btns">
+        <span class="state">default</span>
+        <button class="btn btn-ghost">Cancel</button>
+        <span class="state">hover</span>
+        <button class="btn btn-ghost hover">Cancel</button>
+        <span class="state">disabled</span>
+        <button class="btn btn-disabled" disabled>Cancel</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-head"><div class="row-title">Sizes</div><div class="row-meta">sm · md · lg</div></div>
+      <div class="row-btns">
+        <button class="btn btn-primary sm">Small</button>
+        <button class="btn btn-primary">Medium</button>
+        <button class="btn btn-primary lg">Large</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

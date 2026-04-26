@@ -1,0 +1,277 @@
+<!doctype html>
+<html data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="stylesheet" href="_card.css?v=6">
+<style>
+  .label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#A6A6A6;margin-bottom:8px;}
+  .panel{background:#FFFFFF;border:1px solid rgba(28,28,28,0.08);border-radius:4px;padding:12px;}
+
+  /* DatePicker */
+  .dp-input{font-family:var(--font-mono);font-size:12px;border:1px solid rgba(28,28,28,0.14);border-radius:4px;padding:6px 10px;width:160px;background:#FFFFFF;display:inline-flex;align-items:center;justify-content:space-between;color:#1C1C1C;}
+  .dp-cal{margin-top:8px;width:240px;border:1px solid rgba(28,28,28,0.10);border-radius:4px;padding:8px;background:#FFFFFF;font-family:var(--font-sans);}
+  .dp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;font-weight:600;color:#1C1C1C;}
+  .dp-head .nav{font-family:var(--font-mono);font-size:11px;color:#5A5A5A;cursor:pointer;}
+  .dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+  .dp-grid .dow{font-family:var(--font-mono);font-size:9px;color:#A6A6A6;text-align:center;padding:4px 0;letter-spacing:0.04em;text-transform:uppercase;}
+  .dp-grid .day{font-family:var(--font-mono);font-size:11px;text-align:center;padding:5px 0;border-radius:3px;cursor:pointer;color:#1C1C1C;}
+  .dp-grid .day:hover{background:#F5F5F5;}
+  .dp-grid .day.muted{color:#CCCCCC;}
+  .dp-grid .day.today{border:1px solid #E60000;color:#E60000;}
+  .dp-grid .day.sel{background:#E60000;color:#FFFFFF;}
+  .dp-grid .day.range{background:rgba(230,0,0,0.10);color:#9E0000;border-radius:0;}
+
+  /* TimePicker */
+  .tp-cols{display:flex;gap:0;border:1px solid rgba(28,28,28,0.10);border-radius:4px;overflow:hidden;height:140px;}
+  .tp-col{flex:1;overflow:hidden;display:flex;flex-direction:column;border-right:1px solid rgba(28,28,28,0.06);font-family:var(--font-mono);font-size:12px;}
+  .tp-col:last-child{border-right:none;}
+  .tp-col .v{padding:5px 0;text-align:center;color:#5A5A5A;cursor:pointer;}
+  .tp-col .v.sel{background:rgba(230,0,0,0.08);color:#9E0000;font-weight:600;}
+
+  /* Slider */
+  .sld{position:relative;height:24px;display:flex;align-items:center;}
+  .sld .track{height:3px;background:#F5F5F5;border-radius:9999px;width:100%;position:relative;}
+  .sld .fill{position:absolute;height:100%;background:#E60000;border-radius:9999px;}
+  .sld .knob{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#FFFFFF;border:2px solid #E60000;transform:translate(-50%,-50%);box-shadow:0 1px 3px rgba(28,28,28,0.18);}
+  .sld-ticks{display:flex;justify-content:space-between;margin-top:6px;font-family:var(--font-mono);font-size:9px;color:#A6A6A6;}
+
+  /* Rate */
+  .rate{display:inline-flex;gap:4px;font-size:18px;color:#CCCCCC;}
+  .rate .on{color:#E60000;}
+
+  /* Upload zone */
+  .drop{border:1.5px dashed rgba(28,28,28,0.18);border-radius:4px;padding:24px;text-align:center;background:#FAFAFA;}
+  .drop.over{border-color:#E60000;background:rgba(230,0,0,0.04);}
+  .drop .ico{font-family:var(--font-mono);font-size:24px;color:#A6A6A6;}
+  .drop .t{font-family:var(--font-sans);font-size:13px;color:#1C1C1C;margin-top:6px;font-weight:500;}
+  .drop .s{font-family:var(--font-sans);font-size:11px;color:#5A5A5A;margin-top:2px;}
+  .drop-files{display:flex;flex-direction:column;gap:4px;margin-top:10px;}
+  .drop-files .f{display:flex;align-items:center;gap:8px;padding:6px 8px;background:#FFFFFF;border:1px solid rgba(28,28,28,0.08);border-radius:3px;font-family:var(--font-mono);font-size:11px;}
+  .drop-files .f .name{flex:1;color:#1C1C1C;text-align:left;}
+  .drop-files .f .size{color:#5A5A5A;}
+  .drop-files .f .bar{width:60px;height:3px;background:#F5F5F5;border-radius:9999px;overflow:hidden;}
+  .drop-files .f .bar div{height:100%;background:#E60000;}
+
+  /* Cascader */
+  .casc{display:flex;border:1px solid rgba(28,28,28,0.10);border-radius:4px;overflow:hidden;background:#FFFFFF;}
+  .casc .col{padding:4px;border-right:1px solid rgba(28,28,28,0.06);min-width:130px;}
+  .casc .col:last-child{border-right:none;}
+  .casc .opt{font-family:var(--font-sans);font-size:12px;padding:5px 8px;border-radius:3px;cursor:pointer;color:#1C1C1C;display:flex;align-items:center;justify-content:space-between;}
+  .casc .opt:hover{background:#F5F5F5;}
+  .casc .opt.sel{background:rgba(230,0,0,0.06);color:#9E0000;}
+
+  /* AutoComplete */
+  .ac{border:1px solid rgba(28,28,28,0.14);border-radius:4px;padding:0;background:#FFFFFF;width:280px;}
+  .ac input{border:none;outline:none;padding:7px 10px;font-family:var(--font-sans);font-size:13px;width:100%;color:#1C1C1C;background:transparent;}
+  .ac .list{border-top:1px solid rgba(28,28,28,0.06);padding:4px;}
+  .ac .opt{padding:6px 8px;font-family:var(--font-sans);font-size:13px;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;}
+  .ac .opt:hover{background:#F5F5F5;}
+  .ac .opt mark{background:rgba(230,0,0,0.20);color:#9E0000;padding:0 1px;}
+  .ac .opt .meta{font-family:var(--font-mono);font-size:10px;color:#A6A6A6;}
+
+  /* Mentions */
+  .men{border:1px solid rgba(28,28,28,0.14);border-radius:4px;padding:8px 10px;font-family:var(--font-sans);font-size:13px;background:#FFFFFF;line-height:1.6;color:#1C1C1C;position:relative;width:340px;}
+  .men .at{color:#E60000;font-weight:500;background:rgba(230,0,0,0.06);padding:0 3px;border-radius:2px;}
+  .men .pop{position:absolute;top:100%;left:60px;background:#FFFFFF;border:1px solid rgba(28,28,28,0.10);border-radius:4px;padding:4px;margin-top:4px;width:180px;box-shadow:0 6px 18px rgba(28,28,28,0.10);}
+  .men .pop .opt{padding:5px 8px;font-size:12px;border-radius:3px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .men .pop .opt:hover{background:#F5F5F5;}
+  .men .pop .opt.act{background:rgba(230,0,0,0.06);color:#9E0000;}
+  .men .pop .av{width:16px;height:16px;border-radius:50%;background:#1C1C1C;color:#FFFFFF;font-size:9px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);}
+
+  /* ColorPicker */
+  .cp{display:flex;align-items:center;gap:8px;}
+  .cp .sw{width:30px;height:30px;border-radius:4px;border:1px solid rgba(28,28,28,0.10);}
+  .cp .hex{font-family:var(--font-mono);font-size:12px;border:1px solid rgba(28,28,28,0.14);border-radius:3px;padding:5px 8px;width:100px;color:#1C1C1C;}
+  .cp .palette{display:flex;gap:3px;}
+  .cp .palette span{width:18px;height:18px;border-radius:3px;cursor:pointer;border:1px solid rgba(28,28,28,0.06);}
+
+  /* Transfer */
+  .xfer{display:grid;grid-template-columns:1fr 28px 1fr;gap:8px;align-items:stretch;}
+  .xfer .col{border:1px solid rgba(28,28,28,0.10);border-radius:4px;background:#FFFFFF;display:flex;flex-direction:column;min-height:160px;}
+  .xfer .col .head{padding:6px 10px;border-bottom:1px solid rgba(28,28,28,0.06);font-family:var(--font-mono);font-size:10px;letter-spacing:0.04em;text-transform:uppercase;color:#5A5A5A;display:flex;justify-content:space-between;}
+  .xfer .col .body{flex:1;padding:4px;}
+  .xfer .col .row{padding:4px 6px;font-family:var(--font-sans);font-size:12px;border-radius:3px;cursor:pointer;color:#1C1C1C;display:flex;align-items:center;gap:6px;}
+  .xfer .col .row:hover{background:#F5F5F5;}
+  .xfer .col .row.sel{background:rgba(230,0,0,0.06);}
+  .xfer .arrows{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
+  .xfer .arrows button{width:24px;height:24px;border-radius:3px;border:1px solid rgba(28,28,28,0.10);background:#FFFFFF;font-family:var(--font-mono);font-size:11px;cursor:pointer;color:#3D3D3D;}
+  .xfer .arrows button.active{background:#E60000;color:#FFFFFF;border-color:#E60000;}
+</style></head>
+<body>
+<div class="card">
+  <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#5A5A5A;">Data entry · date · time · upload · slider · rate · cascader · autocomplete · mentions · color · transfer</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+    <div>
+      <div class="label">DatePicker</div>
+      <div class="panel">
+        <div class="dp-input">2026-04-26 <span style="color:#A6A6A6;">📅</span></div>
+        <div class="dp-cal">
+          <div class="dp-head"><span class="nav">‹</span><span>April 2026</span><span class="nav">›</span></div>
+          <div class="dp-grid">
+            <div class="dow">M</div><div class="dow">T</div><div class="dow">W</div><div class="dow">T</div><div class="dow">F</div><div class="dow">S</div><div class="dow">S</div>
+            <div class="day muted">30</div><div class="day muted">31</div><div class="day">1</div><div class="day">2</div><div class="day">3</div><div class="day">4</div><div class="day">5</div>
+            <div class="day">6</div><div class="day">7</div><div class="day">8</div><div class="day">9</div><div class="day">10</div><div class="day">11</div><div class="day">12</div>
+            <div class="day">13</div><div class="day">14</div><div class="day range">15</div><div class="day range">16</div><div class="day range">17</div><div class="day range">18</div><div class="day range">19</div>
+            <div class="day range">20</div><div class="day sel">21</div><div class="day">22</div><div class="day">23</div><div class="day">24</div><div class="day">25</div><div class="day today">26</div>
+            <div class="day">27</div><div class="day">28</div><div class="day">29</div><div class="day">30</div><div class="day muted">1</div><div class="day muted">2</div><div class="day muted">3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="label">TimePicker</div>
+      <div class="panel">
+        <div class="dp-input" style="width:140px;">14 : 30 : 00 <span style="color:#A6A6A6;">⏱</span></div>
+        <div class="tp-cols" style="margin-top:8px;">
+          <div class="tp-col">
+            <div class="v">12</div><div class="v">13</div><div class="v sel">14</div><div class="v">15</div><div class="v">16</div><div class="v">17</div>
+          </div>
+          <div class="tp-col">
+            <div class="v">15</div><div class="v">20</div><div class="v">25</div><div class="v sel">30</div><div class="v">35</div><div class="v">40</div>
+          </div>
+          <div class="tp-col">
+            <div class="v sel">00</div><div class="v">15</div><div class="v">30</div><div class="v">45</div><div class="v">50</div><div class="v">55</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="label">Color picker</div>
+      <div class="panel">
+        <div class="cp" style="margin-bottom:10px;">
+          <div class="sw" style="background:#E60000;"></div>
+          <input class="hex" value="#E60000" />
+        </div>
+        <div class="cp palette">
+          <span style="background:#E60000;"></span>
+          <span style="background:#9E0000;"></span>
+          <span style="background:#1C1C1C;"></span>
+          <span style="background:#3D3D3D;"></span>
+          <span style="background:#5A5A5A;"></span>
+          <span style="background:#A6A6A6;"></span>
+          <span style="background:#CCCCCC;"></span>
+          <span style="background:#F5F5F5;"></span>
+          <span style="background:#FFFFFF;border-color:rgba(28,28,28,0.14);"></span>
+        </div>
+        <div class="label" style="margin-top:14px;">Rate</div>
+        <div class="rate"><span class="on">★</span><span class="on">★</span><span class="on">★</span><span class="on">★</span><span>★</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div>
+      <div class="label">Upload · drag & drop</div>
+      <div class="panel">
+        <div class="drop">
+          <div class="ico">↑</div>
+          <div class="t">Drop files here or click to upload</div>
+          <div class="s">PNG, JPG, PDF · up to 25 MB</div>
+        </div>
+        <div class="drop-files">
+          <div class="f"><span style="color:#1C1C1C;">▦</span><span class="name">deploy-config.yaml</span><span class="size">4.2 KB</span><div class="bar"><div style="width:100%;"></div></div><span style="color:#1C1C1C;">✓</span></div>
+          <div class="f"><span style="color:#1C1C1C;">▦</span><span class="name">audit-2026-04.pdf</span><span class="size">12.4 MB</span><div class="bar"><div style="width:64%;"></div></div><span style="color:#5A5A5A;">64%</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="label">Slider</div>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:#3D3D3D;margin-bottom:6px;"><span>Memory limit</span><span>2.5 GB</span></div>
+        <div class="sld">
+          <div class="track"><div class="fill" style="width:42%;"></div></div>
+          <div class="knob" style="left:42%;"></div>
+        </div>
+        <div class="sld-ticks"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span></div>
+
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:#3D3D3D;margin:14px 0 6px;"><span>Replicas (range)</span><span>3 → 7</span></div>
+        <div class="sld">
+          <div class="track">
+            <div class="fill" style="left:25%;width:35%;"></div>
+          </div>
+          <div class="knob" style="left:25%;"></div>
+          <div class="knob" style="left:60%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div>
+      <div class="label">Cascader</div>
+      <div class="panel">
+        <div class="dp-input" style="width:240px;">us / east / us-east-1 <span style="color:#A6A6A6;">›</span></div>
+        <div class="casc" style="margin-top:8px;">
+          <div class="col">
+            <div class="opt sel">Americas ›</div>
+            <div class="opt">Europe ›</div>
+            <div class="opt">Asia Pacific ›</div>
+          </div>
+          <div class="col">
+            <div class="opt sel">United States ›</div>
+            <div class="opt">Canada ›</div>
+            <div class="opt">Brazil ›</div>
+          </div>
+          <div class="col">
+            <div class="opt">us-east-1 (N. Virginia)</div>
+            <div class="opt sel">us-east-2 (Ohio)</div>
+            <div class="opt">us-west-1 (N. Cal.)</div>
+            <div class="opt">us-west-2 (Oregon)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="label">AutoComplete</div>
+      <div class="panel">
+        <div class="ac">
+          <input value="vau" />
+          <div class="list">
+            <div class="opt"><span><mark>vau</mark>lt-primary</span><span class="meta">us-east-1</span></div>
+            <div class="opt"><span><mark>vau</mark>lt-replica-eu</span><span class="meta">eu-west-1</span></div>
+            <div class="opt"><span><mark>vau</mark>lt-archive</span><span class="meta">us-west-2</span></div>
+          </div>
+        </div>
+        <div class="label" style="margin-top:14px;">Mentions</div>
+        <div class="men">
+          Hey <span class="at">@miguel</span>, can you look at the <span class="at">@audit-shipper</span> alert?
+          <div class="pop">
+            <div class="opt act"><span class="av">M</span>miguel.santos</div>
+            <div class="opt"><span class="av">M</span>maya.kim</div>
+            <div class="opt"><span class="av">M</span>marcus.lee</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="label">Transfer</div>
+    <div class="panel">
+      <div class="xfer">
+        <div class="col">
+          <div class="head"><span>Available · 4</span><span>2 selected</span></div>
+          <div class="body">
+            <div class="row sel"><input type="checkbox" checked style="accent-color:#E60000;" /> read:logs</div>
+            <div class="row sel"><input type="checkbox" checked style="accent-color:#E60000;" /> read:metrics</div>
+            <div class="row"><input type="checkbox" /> write:secrets</div>
+            <div class="row"><input type="checkbox" /> admin:billing</div>
+          </div>
+        </div>
+        <div class="arrows">
+          <button class="active">›</button>
+          <button>‹</button>
+        </div>
+        <div class="col">
+          <div class="head"><span>Granted · 3</span><span>0 selected</span></div>
+          <div class="body">
+            <div class="row"><input type="checkbox" /> deploy:services</div>
+            <div class="row"><input type="checkbox" /> manage:team</div>
+            <div class="row"><input type="checkbox" /> read:audit</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

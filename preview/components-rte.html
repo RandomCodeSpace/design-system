@@ -1,0 +1,253 @@
+<!doctype html>
+<html data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="stylesheet" href="_card.css?v=6">
+<style>
+  .label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#A6A6A6;margin-bottom:8px;}
+
+  /* Editor shell */
+  .rte{background:#FFFFFF;border:1px solid rgba(28,28,28,0.14);border-radius:4px;overflow:hidden;font-family:var(--font-sans);color:#1C1C1C;}
+  .rte:focus-within{border-color:#1C1C1C;}
+
+  /* Toolbar */
+  .tb{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:6px 8px;border-bottom:1px solid rgba(28,28,28,0.08);background:#FAFAFA;}
+  .tb .grp{display:inline-flex;align-items:center;gap:1px;padding-right:6px;border-right:1px solid rgba(28,28,28,0.08);margin-right:4px;}
+  .tb .grp:last-child{border-right:none;}
+  .tb button{font-family:var(--font-sans);font-size:13px;background:transparent;border:1px solid transparent;border-radius:3px;padding:5px 8px;cursor:pointer;color:#1C1C1C;display:inline-flex;align-items:center;gap:4px;line-height:1;min-width:28px;justify-content:center;}
+  .tb button:hover{background:rgba(28,28,28,0.06);}
+  .tb button.on{background:#1C1C1C;color:#FFFFFF;border-color:#1C1C1C;}
+  .tb button.danger.on{background:#E60000;border-color:#E60000;}
+  .tb .heading{font-family:var(--font-sans);font-size:12px;font-weight:600;background:#FFFFFF;border:1px solid rgba(28,28,28,0.14);border-radius:3px;padding:5px 9px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:#1C1C1C;}
+  .tb .heading::after{content:"▾";color:#A6A6A6;font-size:9px;}
+  .tb .swatch{width:16px;height:16px;border-radius:3px;border:1px solid rgba(28,28,28,0.14);}
+  .tb .b{font-weight:700;}
+  .tb .i{font-style:italic;}
+  .tb .u{text-decoration:underline;}
+  .tb .s{text-decoration:line-through;}
+  .tb .mono{font-family:var(--font-mono);font-size:12px;}
+  .tb .kbd{font-family:var(--font-mono);font-size:10px;color:#A6A6A6;margin-left:6px;}
+
+  /* Editor canvas */
+  .canvas{padding:18px 22px 26px;min-height:280px;font-family:var(--font-sans);font-size:14px;line-height:1.62;color:#1C1C1C;outline:none;}
+  .canvas h1{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin:0 0 6px;}
+  .canvas h2{font-size:17px;font-weight:600;margin:18px 0 4px;}
+  .canvas p{margin:0 0 10px;}
+  .canvas .lead{color:#5A5A5A;}
+  .canvas a{color:#9E0000;text-decoration:underline;text-decoration-color:rgba(230,0,0,0.30);text-underline-offset:2px;}
+  .canvas .mark{background:rgba(255,210,122,0.50);padding:0 2px;border-radius:2px;}
+  .canvas code{font-family:var(--font-mono);font-size:12px;background:#F5F5F5;border:1px solid rgba(28,28,28,0.08);border-radius:3px;padding:1px 5px;color:#1C1C1C;}
+  .canvas blockquote{border-left:2px solid #E60000;background:rgba(230,0,0,0.04);margin:10px 0;padding:6px 14px;color:#3D3D3D;border-radius:0 3px 3px 0;}
+  .canvas ul{margin:0 0 10px;padding-left:22px;}
+  .canvas ul li{margin-bottom:3px;}
+  .canvas ul li::marker{color:#A6A6A6;}
+  .canvas .task{list-style:none;display:flex;align-items:flex-start;gap:8px;margin-left:-22px;padding-left:0;}
+  .canvas .task input{accent-color:#E60000;margin-top:3px;}
+  .canvas .cb{background:#0F0F12;color:#FFFFFF;border-radius:4px;padding:10px 14px;font-family:var(--font-mono);font-size:12px;line-height:1.55;margin:10px 0;overflow:auto;}
+  .canvas .cb .cm{color:rgba(255,255,255,0.40);font-style:italic;}
+  .canvas .cb .k{color:#FF6B6B;}
+  .canvas .cb .s{color:#FFD27A;}
+  .canvas .cb .v{color:#7AC9FF;}
+  .canvas table.ed{border-collapse:collapse;font-family:var(--font-sans);font-size:13px;width:100%;margin:10px 0;}
+  .canvas table.ed th,.canvas table.ed td{border:1px solid rgba(28,28,28,0.10);padding:6px 9px;text-align:left;}
+  .canvas table.ed th{background:#FAFAFA;font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#5A5A5A;font-weight:600;}
+  .canvas .mention{background:rgba(28,28,28,0.06);border:1px solid rgba(28,28,28,0.10);border-radius:3px;padding:0 5px 1px;font-size:13px;color:#1C1C1C;}
+  .canvas .tag{background:rgba(230,0,0,0.06);border:1px solid rgba(230,0,0,0.20);border-radius:3px;padding:0 5px 1px;font-size:13px;color:#9E0000;}
+
+  /* Caret */
+  .caret{display:inline-block;width:1px;height:1.1em;background:#1C1C1C;vertical-align:text-bottom;margin:0 0 -2px 0;animation:cb 1s steps(2) infinite;}
+  @keyframes cb{50%{opacity:0;}}
+
+  /* Selection */
+  .sel{background:rgba(122,201,255,0.30);}
+
+  /* Slash menu */
+  .smenu{position:absolute;left:96px;top:118px;background:#FFFFFF;border:1px solid rgba(28,28,28,0.14);border-radius:4px;box-shadow:0 12px 32px rgba(28,28,28,0.16);padding:4px;width:260px;z-index:5;}
+  .smenu .sec{font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#A6A6A6;padding:8px 10px 4px;}
+  .smenu .it{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:3px;cursor:pointer;font-family:var(--font-sans);font-size:13px;color:#1C1C1C;}
+  .smenu .it:hover{background:#F5F5F5;}
+  .smenu .it.act{background:rgba(230,0,0,0.06);color:#9E0000;}
+  .smenu .it .ic{width:24px;height:24px;border-radius:3px;background:#F5F5F5;border:1px solid rgba(28,28,28,0.10);display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;font-weight:600;color:#5A5A5A;flex-shrink:0;}
+  .smenu .it .desc{font-family:var(--font-sans);font-size:11px;color:#A6A6A6;margin-left:auto;}
+
+  /* Bubble menu */
+  .bub{position:absolute;left:206px;top:48px;background:#1C1C1C;color:#FFFFFF;border-radius:4px;padding:3px 4px;display:inline-flex;gap:1px;box-shadow:0 8px 20px rgba(28,28,28,0.30);z-index:4;}
+  .bub button{font-family:var(--font-sans);font-size:12px;background:transparent;border:none;color:#FFFFFF;padding:4px 7px;border-radius:2px;cursor:pointer;}
+  .bub button:hover{background:rgba(255,255,255,0.10);}
+  .bub button.on{background:#E60000;}
+  .bub::before{content:"";position:absolute;left:50%;bottom:-5px;transform:translateX(-50%) rotate(45deg);width:8px;height:8px;background:#1C1C1C;}
+
+  /* Footer status */
+  .ft{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-top:1px solid rgba(28,28,28,0.08);background:#FAFAFA;font-family:var(--font-mono);font-size:10px;letter-spacing:0.04em;color:#5A5A5A;}
+  .ft .l{display:inline-flex;gap:14px;align-items:center;}
+  .ft .saved{color:#1C1C1C;display:inline-flex;align-items:center;gap:5px;}
+  .ft .saved::before{content:"";width:6px;height:6px;border-radius:50%;background:#1C1C1C;}
+  .ft .live{color:#E60000;display:inline-flex;align-items:center;gap:5px;}
+  .ft .live::before{content:"";width:6px;height:6px;border-radius:50%;background:#E60000;animation:cb 1.4s steps(2) infinite;}
+
+  /* Variants strip */
+  .var{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .vart{background:#FFFFFF;border:1px solid rgba(28,28,28,0.10);border-radius:4px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:#1C1C1C;}
+  .vart .vt{font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#5A5A5A;margin-bottom:6px;}
+  .compact-tb{display:flex;gap:1px;padding:4px;border:1px solid rgba(28,28,28,0.10);border-radius:3px;background:#FAFAFA;width:fit-content;}
+  .compact-tb button{background:transparent;border:none;font-family:var(--font-sans);font-size:12px;width:24px;height:24px;border-radius:2px;cursor:pointer;color:#1C1C1C;}
+  .compact-tb button:hover{background:rgba(28,28,28,0.08);}
+  .compact-tb button.on{background:#1C1C1C;color:#FFFFFF;}
+</style></head>
+<body>
+<div class="card" style="background:#F5F5F5;">
+  <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#5A5A5A;">Rich text editor · toolbar · slash menu · bubble menu · blocks</div>
+
+  <!-- Main editor -->
+  <div style="position:relative;">
+    <div class="rte">
+      <!-- Toolbar -->
+      <div class="tb">
+        <div class="grp">
+          <button class="heading">Heading 1</button>
+        </div>
+        <div class="grp">
+          <button class="b on" title="Bold ⌘B">B</button>
+          <button class="i" title="Italic ⌘I">I</button>
+          <button class="u" title="Underline ⌘U">U</button>
+          <button class="s" title="Strike">S</button>
+          <button class="mono" title="Code ⌘E">{ }</button>
+          <button title="Highlight">●</button>
+        </div>
+        <div class="grp">
+          <button title="Bulleted list">≡</button>
+          <button title="Numbered list">1.</button>
+          <button title="Task list" class="on">✓</button>
+          <button title="Quote">"</button>
+          <button title="Divider">—</button>
+        </div>
+        <div class="grp">
+          <button title="Link">🔗</button>
+          <button title="Mention">@</button>
+          <button title="Image">▣</button>
+          <button title="Code block">&lt;/&gt;</button>
+          <button title="Table">⊞</button>
+        </div>
+        <div class="grp">
+          <button title="Align left">↤</button>
+          <button title="Align center">↔</button>
+          <button title="Align right">↦</button>
+        </div>
+        <div class="grp">
+          <button title="Undo">↶<span class="kbd">⌘Z</span></button>
+          <button title="Redo">↷</button>
+        </div>
+      </div>
+
+      <!-- Canvas -->
+      <div class="canvas" contenteditable="false">
+        <h1>Production runbook · <span class="sel">vault-primary</span></h1>
+        <p class="lead">When the primary fails over, follow these steps before paging on-call. Most incidents resolve once raft consensus rebuilds — <span class="mark">don't restart blindly</span>.</p>
+
+        <h2>Owners</h2>
+        <p>Reach out to <span class="mention">@jordan.k</span> or <span class="mention">@priya.r</span>. Tag the incident with <span class="tag">#sev2</span> if degraded for &gt; 5 minutes.</p>
+
+        <h2>Pre-flight</h2>
+        <ul>
+          <li class="task"><input type="checkbox" checked /><span>Confirm raft has quorum: <code>rcs raft status</code></span></li>
+          <li class="task"><input type="checkbox" checked /><span>TLS chain still valid (<code>not after</code> &gt; 30 days)</span></li>
+          <li class="task"><input type="checkbox" /><span>Audit log shipper is draining</span></li>
+          <li class="task"><input type="checkbox" /><span>Page secondary on-call if rollback fails<span class="caret"></span></span></li>
+        </ul>
+
+        <blockquote>If <code>raft status</code> reports a split brain, <strong>do not</strong> force-promote a replica. Open a <a href="#">SEV1 bridge</a> first.</blockquote>
+
+        <h2>Failover snippet</h2>
+        <div class="cb">
+<span class="cm"># promote replica-a if primary is unreachable for &gt; 60s</span>
+<span class="k">rcs</span> raft promote <span class="s">"vault-replica-a"</span> --confirm
+<span class="k">rcs</span> deploy --region <span class="v">us-east-1</span> --version <span class="s">"v0.14.2"</span>
+        </div>
+
+        <h2>Recent incidents</h2>
+        <table class="ed">
+          <thead><tr><th>Date</th><th>Severity</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>2026-04-18</td><td>SEV2</td><td>raft re-quorum, 4m</td></tr>
+            <tr><td>2026-03-02</td><td>SEV3</td><td>tls renew, no impact</td></tr>
+            <tr><td>2026-02-09</td><td>SEV1</td><td>storage migration</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div class="ft">
+        <span class="l">
+          <span>1,402 chars · 248 words</span>
+          <span>markdown · gfm</span>
+        </span>
+        <span class="l">
+          <span class="live">jordan.k editing</span>
+          <span class="saved">Saved · 12:42:18</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Bubble menu floating over highlighted text -->
+    <div class="bub">
+      <button class="b on">B</button>
+      <button class="i">I</button>
+      <button class="u">U</button>
+      <button>🔗</button>
+      <button>"</button>
+      <button class="on" style="background:#E60000;">●</button>
+    </div>
+
+    <!-- Slash menu floating below caret in task list -->
+    <div class="smenu">
+      <div class="sec">Basic blocks</div>
+      <div class="it act"><span class="ic">H1</span>Heading 1<span class="desc">⌘ ⌥ 1</span></div>
+      <div class="it"><span class="ic">H2</span>Heading 2<span class="desc">⌘ ⌥ 2</span></div>
+      <div class="it"><span class="ic">≡</span>Bullet list</div>
+      <div class="it"><span class="ic">✓</span>Task list</div>
+      <div class="sec">Embed</div>
+      <div class="it"><span class="ic">{ }</span>Code block<span class="desc">```</span></div>
+      <div class="it"><span class="ic">⊞</span>Table</div>
+      <div class="it"><span class="ic">@</span>Mention person</div>
+    </div>
+  </div>
+
+  <!-- Compact toolbars / inline variants -->
+  <div>
+    <div class="label">Toolbar variants</div>
+    <div class="var">
+      <div class="vart">
+        <div class="vt">Compact · inline</div>
+        <div class="compact-tb">
+          <button class="b on">B</button>
+          <button class="i">I</button>
+          <button class="u">U</button>
+          <button class="mono">{ }</button>
+          <button>🔗</button>
+        </div>
+      </div>
+      <div class="vart">
+        <div class="vt">Single-line · with placeholder</div>
+        <div class="rte" style="border-radius:3px;">
+          <div class="tb" style="padding:3px 4px;background:#FFFFFF;border-bottom:none;">
+            <button class="b">B</button>
+            <button class="i">I</button>
+            <button>🔗</button>
+            <button>@</button>
+          </div>
+          <div class="canvas" style="min-height:auto;padding:0 12px 10px;font-size:13px;color:#A6A6A6;">Leave a comment…<span class="caret" style="background:#A6A6A6;"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API -->
+  <div>
+    <div class="label">API</div>
+    <div style="background:#FFFFFF;border:1px solid rgba(28,28,28,0.08);border-radius:4px;padding:14px;font-family:var(--font-mono);font-size:11px;color:#1C1C1C;line-height:1.7;">
+      <div><span style="color:#9E0000;">&lt;RichTextEditor</span> value placeholder onChange <span style="color:#5A5A5A;">// gfm markdown round-trips</span> <span style="color:#9E0000;">/&gt;</span></div>
+      <div style="color:#5A5A5A;">  toolbar="full | compact | inline"  &nbsp; collab="off | live"  &nbsp; slashMenu  &nbsp; bubbleMenu</div>
+      <div style="color:#5A5A5A;">  blocks: heading · paragraph · list · task · quote · code · table · image · mention · tag</div>
+      <div style="color:#5A5A5A;">  marks:  bold · italic · underline · strike · code · highlight · link</div>
+      <div style="color:#5A5A5A;">  shortcuts: ⌘B / ⌘I / ⌘U / ⌘E / ⌘K / ⌘Z · markdown shortcuts (#, *, &gt;, ```)</div>
+    </div>
+  </div>
+</div>
+</body></html>

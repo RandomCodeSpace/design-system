@@ -1,0 +1,329 @@
+/* ============================================================
+   RandomCodeSpace — Design Tokens
+   Colors + Typography + Spacing + Motion
+   ============================================================ */
+
+/* ---------- Fonts (self-hosted, offline-safe) ----------
+   Inter: 400 / 500 / 600 — primary UI typeface
+   JetBrains Mono: 400 / 500 / 600 — code, terminal, micro-labels
+   Files live in assets/fonts/ relative to this stylesheet at project root.
+   The Google Fonts @import below is a fallback so static checkers can
+   recognize the family names; local @font-face rules below it always win. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/Inter-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/Inter-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/fonts/Inter-SemiBold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
+}
+
+/* ============================================================
+   ROOT — Shared tokens (theme-agnostic)
+   ============================================================ */
+:root {
+  /* ---- Type families ---- */
+  --font-sans: "Inter", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ---- Type scale (modular, tight) ---- */
+  --fs-display: 64px;   --lh-display: 1.02; --ls-display: -0.035em;
+  --fs-h1:      44px;   --lh-h1:      1.06; --ls-h1:      -0.028em;
+  --fs-h2:      32px;   --lh-h2:      1.12; --ls-h2:      -0.022em;
+  --fs-h3:      22px;   --lh-h3:      1.25; --ls-h3:      -0.014em;
+  --fs-h4:      17px;   --lh-h4:      1.35; --ls-h4:      -0.008em;
+  --fs-body:    15px;   --lh-body:    1.55; --ls-body:     0;
+  --fs-small:   13px;   --lh-small:   1.5;  --ls-small:    0;
+  --fs-micro:   11px;   --lh-micro:   1.4;  --ls-micro:    0.04em;  /* use with mono + uppercase */
+  --fs-code:    13.5px; --lh-code:    1.55;
+
+  /* ---- Weights ---- */
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold: 600;
+  --fw-bold:    700;
+
+  /* ---- Spacing (4px base) ---- */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ---- Radii ---- */
+  --radius-xs: 2px;
+  --radius-sm: 4px;      /* default — tight, Linear-style */
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* ---- Borders ---- */
+  --border-thin: 1px;
+  --border-medium: 1.5px;
+
+  /* ---- Motion (crisp, Linear-style) ---- */
+  --ease-out-quart:  cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:     cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-instant: 80ms;
+  --dur-fast:    140ms;
+  --dur-base:    220ms;
+  --dur-slow:    380ms;
+
+  /* ---- Brand: core palette (Red, Cod Gray, White) ---- */
+  --brand-red-50:   #FFF0F0;
+  --brand-red-100:  #FFD6D6;
+  --brand-red-200:  #FFA8A8;
+  --brand-red-300:  #FF6B6B;
+  --brand-red-400:  #FF2E2E;
+  --brand-red-500:  #E60000;  /* hero — Signal Red */
+  --brand-red-600:  #C20000;
+  --brand-red-700:  #9E0000;
+  --brand-red-800:  #7A0000;
+  --brand-red-900:  #520000;
+
+  --brand-gray-50:  #F5F5F5;
+  --brand-gray-100: #E5E5E5;
+  --brand-gray-200: #CCCCCC;
+  --brand-gray-300: #A6A6A6;
+  --brand-gray-400: #808080;
+  --brand-gray-500: #5A5A5A;
+  --brand-gray-600: #3D3D3D;
+  --brand-gray-700: #2B2B2B;
+  --brand-gray-800: #1C1C1C;  /* Cod Gray */
+  --brand-gray-900: #0F0F0F;
+
+  /* ---- Static palette (theme-invariant) ---- */
+  
+  --amber-500:  #FFB948;
+  --red-500:    #FF5A5F;
+  --blue-500:   #3D8CFF;
+  --pink-500:   #FF5CA8;
+}
+
+/* ============================================================
+   LIGHT THEME (default)
+   ============================================================ */
+:root, [data-theme="light"] {
+  /* Surfaces — neutral, paper-leaning grays */
+  --bg-0: #FFFFFF;       /* page background — pure white */
+  --bg-1: #FFFFFF;       /* card / panel */
+  --bg-2: #F5F5F5;       /* raised, hover */
+  --bg-3: #E5E5E5;       /* pressed, sunken */
+  --bg-inverse: #1C1C1C; /* buttons, chips — Cod Gray */
+
+  /* Foreground */
+  --fg-1: #1C1C1C;       /* primary text — Cod Gray */
+  --fg-2: #3D3D3D;       /* secondary */
+  --fg-3: #5A5A5A;       /* tertiary, metadata */
+  --fg-4: #A6A6A6;       /* disabled / hint */
+  --fg-inverse: #FFFFFF;
+
+  /* Borders */
+  --border-1: rgba(28, 28, 28, 0.08);   /* default hairline */
+  --border-2: rgba(28, 28, 28, 0.14);   /* emphasized */
+  --border-3: rgba(28, 28, 28, 0.24);   /* focus, active */
+
+  /* Accent — Signal Red */
+  --accent:         #E60000;
+  --accent-hover:   #C20000;
+  --accent-press:   #9E0000;
+  --accent-soft:    rgba(230, 0, 0, 0.08);
+  --accent-soft-2:  rgba(230, 0, 0, 0.16);
+  --accent-fg:      #FFFFFF;
+
+  /* Semantic */
+  --success: #1C1C1C;
+  --warning: #D98E2B;
+  --danger:  #E60000;
+  --info:    #2D73D9;
+
+  /* Shadows — soft, barely-there */
+  --shadow-xs: 0 1px 1px rgba(28, 28, 28, 0.04);
+  --shadow-sm: 0 1px 2px rgba(28, 28, 28, 0.06), 0 1px 1px rgba(28, 28, 28, 0.04);
+  --shadow-md: 0 4px 12px rgba(28, 28, 28, 0.07), 0 1px 2px rgba(28, 28, 28, 0.04);
+  --shadow-lg: 0 12px 32px rgba(28, 28, 28, 0.10), 0 2px 6px rgba(28, 28, 28, 0.05);
+  --shadow-focus: 0 0 0 3px rgba(230, 0, 0, 0.28);
+
+  /* Grid overlay */
+  --grid-line: rgba(28, 28, 28, 0.04);
+}
+
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+[data-theme="dark"] {
+  --bg-0: #1C1C1C;       /* page — Cod Gray */
+  --bg-1: #2B2B2B;       /* card */
+  --bg-2: #3D3D3D;       /* raised, hover */
+  --bg-3: #4A4A4A;       /* pressed */
+  --bg-inverse: #FFFFFF;
+
+  --fg-1: #FFFFFF;
+  --fg-2: #CCCCCC;
+  --fg-3: #A6A6A6;
+  --fg-4: #5A5A5A;
+  --fg-inverse: #1C1C1C;
+
+  --border-1: rgba(255, 255, 255, 0.08);
+  --border-2: rgba(255, 255, 255, 0.14);
+  --border-3: rgba(255, 255, 255, 0.24);
+
+  --accent:         #E60000;
+  --accent-hover:   #FF2E2E;
+  --accent-press:   #C20000;
+  --accent-soft:    rgba(230, 0, 0, 0.14);
+  --accent-soft-2:  rgba(230, 0, 0, 0.24);
+  --accent-fg:      #FFFFFF;
+
+  --success: #FFFFFF;
+  --warning: #FFB948;
+  --danger:  #FF6366;
+  --info:    #62A3FF;
+
+  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(230, 0, 0, 0.45);
+
+  --grid-line: rgba(255, 255, 255, 0.04);
+}
+
+/* System theme follows prefers-color-scheme when no explicit theme is set */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-0: #1C1C1C; --bg-1: #2B2B2B; --bg-2: #3D3D3D; --bg-3: #4A4A4A;
+    --bg-inverse: #FFFFFF;
+    --fg-1: #FFFFFF; --fg-2: #CCCCCC; --fg-3: #A6A6A6; --fg-4: #5A5A5A;
+    --fg-inverse: #1C1C1C;
+    --border-1: rgba(255,255,255,0.08); --border-2: rgba(255,255,255,0.14); --border-3: rgba(255,255,255,0.24);
+    --accent: #E60000; --accent-hover: #FF2E2E; --accent-press: #C20000;
+    --accent-soft: rgba(230,0,0,0.14); --accent-soft-2: rgba(230,0,0,0.24);
+    --accent-fg: #FFFFFF;
+    --success: #FFFFFF; --warning: #FFB948; --danger: #FF6366; --info: #62A3FF;
+    --shadow-xs: 0 1px 1px rgba(0,0,0,0.4);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.45), 0 1px 1px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.35);
+    --shadow-lg: 0 18px 40px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.4);
+    --shadow-focus: 0 0 0 3px rgba(230,0,0,0.45);
+    --grid-line: rgba(255,255,255,0.04);
+  }
+}
+
+/* ============================================================
+   SEMANTIC TYPOGRAPHY
+   ============================================================ */
+html { font-family: var(--font-sans); color: var(--fg-1); background: var(--bg-0); }
+body {
+  font-size: var(--fs-body); line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "cv11";
+}
+
+.rcs-display, h1.display {
+  font-family: var(--font-sans); font-weight: var(--fw-semibold);
+  font-size: var(--fs-display); line-height: var(--lh-display); letter-spacing: var(--ls-display);
+  color: var(--fg-1);
+}
+h1, .rcs-h1 {
+  font-family: var(--font-sans); font-weight: var(--fw-semibold);
+  font-size: var(--fs-h1); line-height: var(--lh-h1); letter-spacing: var(--ls-h1);
+  color: var(--fg-1); margin: 0;
+}
+h2, .rcs-h2 {
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-h2); line-height: var(--lh-h2); letter-spacing: var(--ls-h2);
+  color: var(--fg-1); margin: 0;
+}
+h3, .rcs-h3 {
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-h3); line-height: var(--lh-h3); letter-spacing: var(--ls-h3);
+  color: var(--fg-1); margin: 0;
+}
+h4, .rcs-h4 {
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-h4); line-height: var(--lh-h4); letter-spacing: var(--ls-h4);
+  color: var(--fg-1); margin: 0;
+}
+p, .rcs-body {
+  font-size: var(--fs-body); line-height: var(--lh-body);
+  color: var(--fg-2); margin: 0;
+}
+.rcs-small, small { font-size: var(--fs-small); line-height: var(--lh-small); color: var(--fg-3); }
+
+/* Micro: uppercase mono labels — the "dev-tool" signature */
+.rcs-micro, .rcs-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  text-transform: uppercase; color: var(--fg-3); font-weight: var(--fw-medium);
+}
+
+code, kbd, samp, pre, .rcs-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-code); line-height: var(--lh-code);
+  font-feature-settings: "zero", "ss02";
+}
+code:not(pre code) {
+  background: var(--bg-2); border: 1px solid var(--border-1);
+  padding: 1px 5px; border-radius: var(--radius-xs); color: var(--fg-1);
+  font-size: 0.92em;
+}
+
+a { color: var(--accent); text-decoration: none; transition: opacity var(--dur-fast) var(--ease-out-quart); }
+a:hover { opacity: 0.75; }
+
+::selection { background: var(--accent-soft-2); color: var(--fg-1); }
+
+/* Focus ring — consistent across the system */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-radius: var(--radius-sm);
+}

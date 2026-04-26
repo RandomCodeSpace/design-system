@@ -1,0 +1,42 @@
+<!doctype html>
+<html data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="stylesheet" href="_card.css?v=6">
+<style>
+  .field{display:flex;flex-direction:column;gap:5px;flex:1;}
+  .field label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.04em;text-transform:uppercase;color:#5A5A5A;font-weight:500;}
+  .input{font-family:var(--font-sans);font-size:14px;color:#1C1C1C;background:#fff;border:1px solid rgba(28,28,28,0.14);border-radius:4px;padding:8px 10px;outline:none;transition:border-color 140ms,box-shadow 140ms;}
+  .input:hover{border-color:rgba(28,28,28,0.24);}
+  .input:focus{border-color:#1C1C1C;box-shadow:0 0 0 3px rgba(28,28,28,0.22);}
+  .input.error{border-color:#E24548;}
+  .input::placeholder{color:#A6A6A6;}
+  .hint{font-family:var(--font-mono);font-size:10px;color:#5A5A5A;}
+  .hint.err{color:#E24548;}
+</style></head>
+<body>
+<div class="card">
+  <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#5A5A5A;">Inputs</div>
+  <div style="display:flex;gap:14px;">
+    <div class="field">
+      <label>Service name</label>
+      <input class="input" value="vault-primary"/>
+      <div class="hint">Lowercase, hyphens only.</div>
+    </div>
+    <div class="field">
+      <label>Port</label>
+      <input class="input" placeholder="8443"/>
+      <div class="hint">Default 8443</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:14px;">
+    <div class="field">
+      <label>Host</label>
+      <input class="input" value="vault.rcs.local" style="border-color:#1C1C1C;box-shadow:0 0 0 3px rgba(28,28,28,0.22);"/>
+      <div class="hint">Focused</div>
+    </div>
+    <div class="field">
+      <label>Secret</label>
+      <input class="input error" value="tooshort"/>
+      <div class="hint err">Must be at least 32 characters.</div>
+    </div>
+  </div>
+</div>
+</body></html>

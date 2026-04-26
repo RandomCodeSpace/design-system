@@ -1,0 +1,238 @@
+<!doctype html>
+<html data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="stylesheet" href="_card.css?v=6">
+<style>
+  .label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#A6A6A6;margin-bottom:8px;}
+  .panel{background:#FFFFFF;border:1px solid rgba(28,28,28,0.08);border-radius:4px;padding:12px;}
+
+  /* Tree */
+  .tree{font-family:var(--font-sans);font-size:13px;color:#1C1C1C;}
+  .tn{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:3px;cursor:pointer;}
+  .tn:hover{background:#F5F5F5;}
+  .tn.sel{background:rgba(230,0,0,0.06);color:#9E0000;}
+  .tn .chev{font-family:var(--font-mono);font-size:10px;width:12px;color:#A6A6A6;}
+  .tn .ico{font-family:var(--font-mono);font-size:11px;color:#5A5A5A;}
+  .tn .count{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:#A6A6A6;}
+  .tnest{padding-left:18px;display:flex;flex-direction:column;}
+
+  /* Avatar */
+  .av{border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:600;color:#FFFFFF;}
+  .av-sm{width:22px;height:22px;font-size:10px;}
+  .av-md{width:32px;height:32px;font-size:12px;}
+  .av-lg{width:44px;height:44px;font-size:14px;}
+  .av-group{display:inline-flex;}
+  .av-group .av{border:2px solid #FFFFFF;margin-left:-6px;}
+  .av-group .av:first-child{margin-left:0;}
+
+  /* Calendar (month overview) */
+  .cal{font-family:var(--font-sans);font-size:12px;}
+  .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .cal-head h4{margin:0;font-size:14px;font-weight:600;color:#1C1C1C;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-grid .dow{font-family:var(--font-mono);font-size:9px;color:#A6A6A6;text-align:left;padding:4px;letter-spacing:0.04em;text-transform:uppercase;}
+  .cal-grid .cell{aspect-ratio:1.4;padding:5px 6px;border:1px solid rgba(28,28,28,0.06);border-radius:3px;display:flex;flex-direction:column;}
+  .cal-grid .cell .n{font-family:var(--font-mono);font-size:10px;color:#5A5A5A;}
+  .cal-grid .cell.sel{border-color:#E60000;background:rgba(230,0,0,0.04);}
+  .cal-grid .cell .ev{font-family:var(--font-sans);font-size:9px;background:#1C1C1C;color:#FFFFFF;padding:1px 4px;border-radius:2px;margin-top:2px;}
+  .cal-grid .cell .ev.r{background:#E60000;}
+  .cal-grid .cell.muted .n{color:#CCCCCC;}
+
+  /* Carousel */
+  .car{position:relative;border:1px solid rgba(28,28,28,0.08);border-radius:4px;overflow:hidden;background:#1C1C1C;}
+  .car .slide{padding:36px 28px;color:#FFFFFF;font-family:var(--font-sans);}
+  .car .slide h4{margin:0 0 6px;font-size:18px;font-weight:600;letter-spacing:-0.014em;}
+  .car .slide p{margin:0;font-size:13px;opacity:0.7;}
+  .car .dots{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:4px;}
+  .car .dots span{width:18px;height:3px;background:rgba(255,255,255,0.35);border-radius:9999px;}
+  .car .dots span.on{background:#E60000;}
+
+  /* Collapse */
+  .col-item{border:1px solid rgba(28,28,28,0.10);border-radius:0;background:#FFFFFF;}
+  .col-item + .col-item{border-top:none;}
+  .col-item:first-child{border-top-left-radius:4px;border-top-right-radius:4px;}
+  .col-item:last-child{border-bottom-left-radius:4px;border-bottom-right-radius:4px;}
+  .col-h{padding:9px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:var(--font-sans);font-size:13px;color:#1C1C1C;}
+  .col-h .chev{font-family:var(--font-mono);font-size:10px;color:#A6A6A6;}
+  .col-h .meta{font-family:var(--font-mono);font-size:10px;color:#5A5A5A;}
+  .col-b{padding:0 12px 12px;font-family:var(--font-sans);font-size:12px;color:#3D3D3D;line-height:1.5;border-top:1px solid rgba(28,28,28,0.06);padding-top:10px;}
+
+  /* List */
+  .list .row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(28,28,28,0.06);font-family:var(--font-sans);font-size:13px;}
+  .list .row:last-child{border-bottom:none;}
+  .list .row .name{font-weight:500;color:#1C1C1C;}
+  .list .row .desc{font-family:var(--font-mono);font-size:11px;color:#5A5A5A;}
+  .list .row .actions{margin-left:auto;display:flex;gap:8px;font-family:var(--font-mono);font-size:11px;color:#5A5A5A;}
+  .list .row .actions a{color:#5A5A5A;text-decoration:none;}
+  .list .row .actions a:hover{color:#1C1C1C;}
+
+  /* QRCode (CSS) */
+  .qr{width:120px;height:120px;background:#FFFFFF;border:1px solid rgba(28,28,28,0.10);border-radius:4px;padding:8px;display:flex;align-items:center;justify-content:center;}
+  .qr-grid{width:100%;height:100%;background-image:linear-gradient(45deg,#1C1C1C 25%,transparent 25%),linear-gradient(-45deg,#1C1C1C 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#1C1C1C 75%),linear-gradient(-45deg,transparent 75%,#1C1C1C 75%);background-size:8px 8px;background-position:0 0,0 4px,4px -4px,-4px 0;}
+
+  /* Image */
+  .img{width:100%;aspect-ratio:1.6;background:linear-gradient(135deg,#3D3D3D 0%,#1C1C1C 100%);border:1px solid rgba(28,28,28,0.10);border-radius:4px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.30);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;}
+
+  /* Timeline */
+  .tl{font-family:var(--font-sans);}
+  .tli{display:grid;grid-template-columns:14px 1fr;gap:10px;padding-bottom:14px;position:relative;}
+  .tli::before{content:"";position:absolute;left:6px;top:14px;bottom:0;width:1px;background:rgba(28,28,28,0.10);}
+  .tli:last-child::before{display:none;}
+  .tli .dot{width:10px;height:10px;border-radius:50%;background:#FFFFFF;border:2px solid #E60000;margin-top:4px;}
+  .tli.muted .dot{border-color:rgba(28,28,28,0.18);}
+  .tli .ts{font-family:var(--font-mono);font-size:10px;color:#A6A6A6;letter-spacing:0.04em;}
+  .tli .body{font-size:13px;color:#1C1C1C;}
+  .tli.muted .body{color:#5A5A5A;}
+
+  /* Tour overlay */
+  .tour{position:relative;height:200px;background:#FFFFFF;border:1px solid rgba(28,28,28,0.08);border-radius:4px;overflow:hidden;}
+  .tour .scrim{position:absolute;inset:0;background:rgba(28,28,28,0.55);}
+  .tour .target{position:absolute;left:18px;top:18px;width:130px;height:34px;background:#FFFFFF;border-radius:4px;border:2px solid #E60000;box-shadow:0 0 0 9999px rgba(28,28,28,0.55);font-family:var(--font-sans);font-size:12px;color:#1C1C1C;display:flex;align-items:center;justify-content:center;font-weight:500;}
+  .tour .pop{position:absolute;left:18px;top:64px;background:#FFFFFF;border-radius:4px;padding:12px 14px;width:240px;box-shadow:0 12px 32px rgba(28,28,28,0.30);}
+  .tour .pop h5{margin:0 0 4px;font-size:13px;font-weight:600;color:#1C1C1C;}
+  .tour .pop p{margin:0;font-family:var(--font-sans);font-size:12px;color:#3D3D3D;line-height:1.5;}
+  .tour .pop .ft{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+  .tour .pop .ft .step{font-family:var(--font-mono);font-size:10px;color:#A6A6A6;}
+  .tour .pop .ft button{font-family:var(--font-sans);font-size:11px;background:#E60000;color:#FFFFFF;border:none;border-radius:3px;padding:4px 10px;cursor:pointer;}
+</style></head>
+<body>
+<div class="card" style="background:#F5F5F5;">
+  <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#5A5A5A;">Data display · tree · avatar · calendar · carousel · collapse · list · qr · timeline · tour</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div>
+      <div class="label">Tree</div>
+      <div class="panel">
+        <div class="tree">
+          <div class="tn"><span class="chev">▾</span><span class="ico">▦</span>production<span class="count">12</span></div>
+          <div class="tnest">
+            <div class="tn"><span class="chev">▾</span><span class="ico">▦</span>us-east-1<span class="count">5</span></div>
+            <div class="tnest">
+              <div class="tn sel"><span class="chev"></span><span class="ico">●</span>vault-primary</div>
+              <div class="tn"><span class="chev"></span><span class="ico">●</span>tunnel-edge</div>
+              <div class="tn"><span class="chev"></span><span class="ico">○</span>webhook-relay</div>
+            </div>
+            <div class="tn"><span class="chev">▸</span><span class="ico">▦</span>eu-west-1<span class="count">4</span></div>
+            <div class="tn"><span class="chev">▸</span><span class="ico">▦</span>ap-southeast-1<span class="count">3</span></div>
+          </div>
+          <div class="tn"><span class="chev">▸</span><span class="ico">▦</span>staging<span class="count">8</span></div>
+          <div class="tn"><span class="chev">▸</span><span class="ico">▦</span>development<span class="count">4</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="label">Avatar</div>
+      <div class="panel">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="av av-sm" style="background:#E60000;">JS</div>
+          <div class="av av-md" style="background:#1C1C1C;">MK</div>
+          <div class="av av-lg" style="background:#3D3D3D;">PB</div>
+        </div>
+        <div class="label" style="margin-top:14px;">Group · max 4</div>
+        <div class="av-group">
+          <div class="av av-md" style="background:#E60000;">JS</div>
+          <div class="av av-md" style="background:#1C1C1C;">MK</div>
+          <div class="av av-md" style="background:#3D3D3D;">PB</div>
+          <div class="av av-md" style="background:#5A5A5A;">RT</div>
+          <div class="av av-md" style="background:#A6A6A6;color:#1C1C1C;">+8</div>
+        </div>
+        <div class="label" style="margin-top:14px;">QR code</div>
+        <div class="qr"><div class="qr-grid"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="label">Calendar · month view</div>
+    <div class="panel">
+      <div class="cal">
+        <div class="cal-head"><h4>April 2026</h4><div style="display:flex;gap:4px;font-family:var(--font-mono);font-size:11px;color:#5A5A5A;"><span style="border:1px solid rgba(28,28,28,0.10);padding:3px 9px;border-radius:3px;cursor:pointer;">‹</span><span style="border:1px solid rgba(28,28,28,0.10);padding:3px 9px;border-radius:3px;cursor:pointer;">today</span><span style="border:1px solid rgba(28,28,28,0.10);padding:3px 9px;border-radius:3px;cursor:pointer;">›</span></div></div>
+        <div class="cal-grid">
+          <div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div><div class="dow">Sun</div>
+          <div class="cell muted"><span class="n">30</span></div><div class="cell muted"><span class="n">31</span></div><div class="cell"><span class="n">1</span></div><div class="cell"><span class="n">2</span><span class="ev">deploy</span></div><div class="cell"><span class="n">3</span></div><div class="cell"><span class="n">4</span></div><div class="cell"><span class="n">5</span></div>
+          <div class="cell"><span class="n">6</span></div><div class="cell"><span class="n">7</span><span class="ev r">incident</span></div><div class="cell"><span class="n">8</span></div><div class="cell"><span class="n">9</span></div><div class="cell"><span class="n">10</span><span class="ev">deploy</span></div><div class="cell"><span class="n">11</span></div><div class="cell"><span class="n">12</span></div>
+          <div class="cell"><span class="n">13</span></div><div class="cell"><span class="n">14</span></div><div class="cell"><span class="n">15</span></div><div class="cell"><span class="n">16</span><span class="ev">deploy</span></div><div class="cell"><span class="n">17</span></div><div class="cell"><span class="n">18</span></div><div class="cell"><span class="n">19</span></div>
+          <div class="cell"><span class="n">20</span></div><div class="cell"><span class="n">21</span></div><div class="cell"><span class="n">22</span><span class="ev">audit</span></div><div class="cell"><span class="n">23</span></div><div class="cell"><span class="n">24</span></div><div class="cell"><span class="n">25</span></div><div class="cell sel"><span class="n">26</span><span class="ev r">today</span></div>
+          <div class="cell"><span class="n">27</span></div><div class="cell"><span class="n">28</span></div><div class="cell"><span class="n">29</span></div><div class="cell"><span class="n">30</span></div><div class="cell muted"><span class="n">1</span></div><div class="cell muted"><span class="n">2</span></div><div class="cell muted"><span class="n">3</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div>
+      <div class="label">Carousel</div>
+      <div class="car">
+        <div class="slide">
+          <h4>Self-host without the ops tax</h4>
+          <p>Deploy in one command. We handle TLS, autoscale, and rolling restarts.</p>
+          <div class="dots"><span class="on"></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="label" style="margin-top:14px;">Image</div>
+      <div class="img">PLACEHOLDER · 1024×640</div>
+    </div>
+    <div>
+      <div class="label">Collapse</div>
+      <div>
+        <div class="col-item">
+          <div class="col-h"><span><span style="font-family:var(--font-mono);color:#A6A6A6;font-size:10px;margin-right:6px;">▾</span>Environment variables</span><span class="meta">12</span></div>
+          <div class="col-b">DATABASE_URL · REDIS_URL · TLS_CERT · SECRET_KEY · …</div>
+        </div>
+        <div class="col-item">
+          <div class="col-h"><span><span style="font-family:var(--font-mono);color:#A6A6A6;font-size:10px;margin-right:6px;">▸</span>Networking</span><span class="meta">3 rules</span></div>
+        </div>
+        <div class="col-item">
+          <div class="col-h"><span><span style="font-family:var(--font-mono);color:#A6A6A6;font-size:10px;margin-right:6px;">▸</span>Secrets</span><span class="meta">5</span></div>
+        </div>
+        <div class="col-item">
+          <div class="col-h"><span><span style="font-family:var(--font-mono);color:#A6A6A6;font-size:10px;margin-right:6px;">▸</span>Build &amp; cache</span><span class="meta">default</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div>
+      <div class="label">List</div>
+      <div class="panel">
+        <div class="list">
+          <div class="row"><div class="av av-sm" style="background:#E60000;">JS</div><div><div class="name">Jordan Smith</div><div class="desc">jordan@rcs.dev · admin</div></div><div class="actions"><a href="#">Message</a><a href="#">Remove</a></div></div>
+          <div class="row"><div class="av av-sm" style="background:#1C1C1C;">MK</div><div><div class="name">Maya Kim</div><div class="desc">maya@rcs.dev · member</div></div><div class="actions"><a href="#">Message</a><a href="#">Remove</a></div></div>
+          <div class="row"><div class="av av-sm" style="background:#3D3D3D;">PB</div><div><div class="name">Priya Banerjee</div><div class="desc">priya@rcs.dev · member</div></div><div class="actions"><a href="#">Message</a><a href="#">Remove</a></div></div>
+          <div class="row"><div class="av av-sm" style="background:#5A5A5A;">RT</div><div><div class="name">Renee Tan</div><div class="desc">renee@rcs.dev · viewer</div></div><div class="actions"><a href="#">Message</a><a href="#">Remove</a></div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="label">Timeline</div>
+      <div class="panel">
+        <div class="tl">
+          <div class="tli"><div class="dot"></div><div><div class="ts">14:32 · today</div><div class="body">Deployed v0.14.2 to <code style="font-family:var(--font-mono);font-size:11px;">us-east-1</code></div></div></div>
+          <div class="tli"><div class="dot"></div><div><div class="ts">12:14 · today</div><div class="body" style="color:#9E0000;">audit-shipper failed: TLS handshake error</div></div></div>
+          <div class="tli muted"><div class="dot"></div><div><div class="ts">09:01 · today</div><div class="body">Maya Kim invited 2 members</div></div></div>
+          <div class="tli muted"><div class="dot"></div><div><div class="ts">yesterday</div><div class="body">Rotated production secrets</div></div></div>
+          <div class="tli muted"><div class="dot"></div><div><div class="ts">3 days ago</div><div class="body">Migrated webhook-relay → v1.2.0</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="label">Tour · onboarding spotlight</div>
+    <div class="tour">
+      <div class="scrim"></div>
+      <div class="target">+ Deploy</div>
+      <div class="pop">
+        <h5>Deploy your first service</h5>
+        <p>Click here to spin up a service from a Git repo or a container image.</p>
+        <div class="ft">
+          <span class="step">Step 1 of 4</span>
+          <div style="display:flex;gap:5px;">
+            <button style="background:transparent;color:#5A5A5A;">Skip</button>
+            <button>Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

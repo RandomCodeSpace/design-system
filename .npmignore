@@ -1,0 +1,18 @@
+# Source kept out of the published tarball — types are pre-built into dist/
+# (we still ship src/ as a fallback in `files` since users may want to read source)
+
+# Never publish these
+.github/
+preview/
+scrap/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+tsconfig.json
+.eslintrc*
+.prettierrc*
+.editorconfig
+node_modules/
+coverage/
+.cache/

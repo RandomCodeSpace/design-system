@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" fill="none">
+  <path d="M22 14 L14 14 L14 50 L22 50" stroke="currentColor" stroke-width="3" stroke-linecap="square" fill="none"></path>
+  <path d="M42 14 L50 14 L50 50 L42 50" stroke="currentColor" stroke-width="3" stroke-linecap="square" fill="none"></path>
+  <circle cx="32" cy="32" r="4" fill="#E60000"></circle>
+  <text x="70" y="40" font-family="ui-monospace, &#39;JetBrains Mono&#39;, SFMono-Regular, monospace" font-size="22" font-weight="600" fill="currentColor" letter-spacing="-0.5">randomcodespace</text>
+</svg>

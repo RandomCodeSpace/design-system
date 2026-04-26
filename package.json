@@ -1,0 +1,59 @@
+{
+  "name": "@ossrandom/design-system",
+  "version": "0.1.0",
+  "description": "RandomCodeSpace Design System — strongly-typed React component definitions.",
+  "keywords": ["design-system", "react", "typescript", "components", "ui-kit"],
+  "license": "MIT",
+  "author": "RandomCodeSpace",
+  "homepage": "https://github.com/RandomCodeSpace/design-system#readme",
+  "bugs": { "url": "https://github.com/RandomCodeSpace/design-system/issues" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RandomCodeSpace/design-system.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./tokens": {
+      "types": "./dist/tokens.d.ts",
+      "import": "./dist/tokens.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": ["dist", "src", "README.md"],
+  "sideEffects": ["**/*.css"],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').writeFileSync('dist/styles.css', require('fs').readFileSync('colors_and_type.css','utf8') + '\\n' + require('fs').readFileSync('src/styles.css','utf8'))\"",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "test": "vitest run",
+    "preview": "echo 'Open preview/responsive-check.html in a browser' ",
+    "prepublishOnly": "pnpm run typecheck && pnpm run build",
+    "release": "pnpm version"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": { "node": ">=18.18" },
+  "packageManager": "pnpm@9.12.0"
+}

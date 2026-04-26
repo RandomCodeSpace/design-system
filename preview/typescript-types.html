@@ -1,0 +1,356 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TypeScript types · RandomCodeSpace DS</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;background:#F5F5F5;font-family:var(--font-sans);color:#1C1C1C;}
+  header{padding:28px 32px 18px;background:#FFFFFF;border-bottom:1px solid rgba(28,28,28,0.08);}
+  header h1{margin:0 0 4px;font-size:22px;font-weight:600;letter-spacing:-0.02em;}
+  header p{margin:0;color:#5A5A5A;font-size:14px;}
+  header .meta{display:flex;gap:14px;margin-top:14px;font-family:var(--font-mono);font-size:11px;color:#5A5A5A;flex-wrap:wrap;}
+  header .meta span{background:#F5F5F5;border:1px solid rgba(28,28,28,0.08);border-radius:3px;padding:3px 8px;}
+  main{padding:24px 32px 80px;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:24px;}
+  section{background:#FFFFFF;border:1px solid rgba(28,28,28,0.08);border-radius:6px;overflow:hidden;}
+  section .h{padding:14px 18px;border-bottom:1px solid rgba(28,28,28,0.06);background:#FAFAFA;display:flex;align-items:center;gap:10px;}
+  section .h .lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;background:#1C1C1C;color:#FFFFFF;padding:2px 7px;border-radius:2px;}
+  section .h h2{font-size:14px;font-weight:600;margin:0;}
+  section .h .desc{font-size:12px;color:#5A5A5A;margin-left:auto;}
+  pre{margin:0;padding:18px 22px;font-family:var(--font-mono);font-size:12px;line-height:1.65;color:#1C1C1C;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+  .kw{color:#9E0000;font-weight:600;}
+  .ty{color:#5A2EAA;}
+  .str{color:#8A6500;}
+  .cm{color:#6B6B6B;font-style:italic;}
+  .num{color:#0F5499;}
+  .pn{color:#1C1C1C;}
+  .punct{color:#5A5A5A;}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;padding:14px 18px;}
+  .pill{font-family:var(--font-mono);font-size:11px;background:#F5F5F5;border:1px solid rgba(28,28,28,0.08);border-radius:3px;padding:6px 10px;color:#1C1C1C;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .pill .ext{color:#A6A6A6;font-size:10px;}
+
+  .toc{position:sticky;top:0;background:#1C1C1C;color:#FFFFFF;display:flex;flex-wrap:wrap;gap:4px;padding:10px 32px;font-family:var(--font-mono);font-size:11px;z-index:5;}
+  .toc a{color:rgba(255,255,255,0.70);text-decoration:none;padding:3px 9px;border-radius:3px;}
+  .toc a:hover{background:rgba(255,255,255,0.10);color:#FFFFFF;}
+
+  @media (max-width:560px){
+    main{padding:18px;}
+    header{padding:20px;}
+    .toc{padding:8px 18px;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>TypeScript types · component reference</h1>
+  <p>Strongly-typed prop interfaces for every component in the RandomCodeSpace design system. Pure types — pair with your runtime implementations.</p>
+  <div class="meta">
+    <span>strict: true</span>
+    <span>noUncheckedIndexedAccess: true</span>
+    <span>exactOptionalPropertyTypes: true</span>
+    <span>react ≥ 18</span>
+    <span>30 components · 9 token types</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#tokens">tokens</a>
+  <a href="#button">Button</a>
+  <a href="#input">Input</a>
+  <a href="#select">Select / Combobox</a>
+  <a href="#space">Space / ScrollDiv</a>
+  <a href="#table">Table</a>
+  <a href="#chat">Chat</a>
+  <a href="#rte">RichTextEditor</a>
+  <a href="#terminal">Terminal</a>
+  <a href="#code">CodeBlock</a>
+  <a href="#toast">toast</a>
+  <a href="#all">all components</a>
+</nav>
+
+<main>
+
+  <section id="tokens">
+    <div class="h"><span class="lbl">tokens</span><h2>Design token types</h2><span class="desc">src/tokens.ts</span></div>
+<pre><span class="kw">export type</span> <span class="ty">SpaceSize</span> = <span class="str">"xs"</span> | <span class="str">"sm"</span> | <span class="str">"md"</span> | <span class="str">"lg"</span> | <span class="str">"xl"</span> | <span class="ty">number</span>;
+<span class="kw">export type</span> <span class="ty">Radius</span>    = <span class="str">"none"</span> | <span class="str">"sm"</span> | <span class="str">"md"</span> | <span class="str">"lg"</span> | <span class="str">"pill"</span> | <span class="str">"circle"</span> | <span class="ty">number</span>;
+<span class="kw">export type</span> <span class="ty">Size</span>      = <span class="str">"xs"</span> | <span class="str">"sm"</span> | <span class="str">"md"</span> | <span class="str">"lg"</span>;
+<span class="kw">export type</span> <span class="ty">Density</span>   = <span class="str">"comfortable"</span> | <span class="str">"default"</span> | <span class="str">"compact"</span>;
+<span class="kw">export type</span> <span class="ty">ThemeMode</span> = <span class="str">"light"</span> | <span class="str">"dark"</span>;
+<span class="kw">export type</span> <span class="ty">Direction</span> = <span class="str">"horizontal"</span> | <span class="str">"vertical"</span>;
+<span class="kw">export type</span> <span class="ty">Axis</span>      = <span class="str">"x"</span> | <span class="str">"y"</span> | <span class="str">"both"</span>;
+<span class="kw">export type</span> <span class="ty">Align</span>     = <span class="str">"start"</span> | <span class="str">"center"</span> | <span class="str">"end"</span> | <span class="str">"baseline"</span> | <span class="str">"stretch"</span>;
+<span class="kw">export type</span> <span class="ty">Justify</span>   = <span class="str">"start"</span> | <span class="str">"center"</span> | <span class="str">"end"</span> | <span class="str">"between"</span> | <span class="str">"around"</span> | <span class="str">"evenly"</span>;</pre>
+  </section>
+
+  <section id="button">
+    <div class="h"><span class="lbl">button</span><h2>Button · IconButton · ButtonGroup</h2><span class="desc">discriminated variants</span></div>
+<pre><span class="kw">export type</span> <span class="ty">ButtonVariant</span> = <span class="str">"primary"</span> | <span class="str">"secondary"</span> | <span class="str">"ghost"</span> | <span class="str">"danger"</span> | <span class="str">"link"</span>;
+
+<span class="kw">export interface</span> <span class="ty">ButtonProps</span> <span class="kw">extends</span> <span class="ty">BaseProps</span> {
+  <span class="kw">readonly</span> variant<span class="punct">?</span>: <span class="ty">ButtonVariant</span>;
+  <span class="kw">readonly</span> size<span class="punct">?</span>: <span class="ty">Size</span>;
+  <span class="kw">readonly</span> shape<span class="punct">?</span>: <span class="str">"rect"</span> | <span class="str">"pill"</span> | <span class="str">"square"</span> | <span class="str">"circle"</span>;
+  <span class="kw">readonly</span> loading<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> disabled<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> block<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> iconLeft<span class="punct">?</span>: <span class="ty">ReactNode</span>;
+  <span class="kw">readonly</span> iconRight<span class="punct">?</span>: <span class="ty">ReactNode</span>;
+  <span class="kw">readonly</span> children<span class="punct">?</span>: <span class="ty">ReactNode</span>;
+  <span class="kw">readonly</span> onClick<span class="punct">?</span>: (e: <span class="ty">MouseEvent</span>&lt;<span class="ty">HTMLButtonElement</span>&gt;) =&gt; <span class="ty">void</span>;
+}
+
+<span class="kw">export interface</span> <span class="ty">IconButtonProps</span> <span class="kw">extends</span> <span class="ty">Omit</span>&lt;<span class="ty">ButtonProps</span>, <span class="str">"iconLeft"</span> | <span class="str">"iconRight"</span> | <span class="str">"block"</span> | <span class="str">"children"</span>&gt; {
+  <span class="kw">readonly</span> icon: <span class="ty">ReactNode</span>;
+  <span class="kw">readonly</span> <span class="str">"aria-label"</span>: <span class="ty">string</span>;       <span class="cm">// ← required for a11y</span>
+  <span class="kw">readonly</span> round<span class="punct">?</span>: <span class="ty">boolean</span>;
+}</pre>
+  </section>
+
+  <section id="input">
+    <div class="h"><span class="lbl">input</span><h2>Input · NumberInput · PinInput · Textarea</h2><span class="desc">strict event signatures</span></div>
+<pre><span class="kw">export interface</span> <span class="ty">InputProps</span> <span class="kw">extends</span> <span class="ty">BaseProps</span> {
+  <span class="kw">readonly</span> value<span class="punct">?</span>: <span class="ty">string</span>;
+  <span class="kw">readonly</span> placeholder<span class="punct">?</span>: <span class="ty">string</span>;
+  <span class="kw">readonly</span> status<span class="punct">?</span>: <span class="str">"default"</span> | <span class="str">"error"</span> | <span class="str">"warning"</span> | <span class="str">"success"</span>;
+  <span class="kw">readonly</span> prefix<span class="punct">?</span>: <span class="ty">ReactNode</span>;
+  <span class="kw">readonly</span> suffix<span class="punct">?</span>: <span class="ty">ReactNode</span>;
+  <span class="kw">readonly</span> clearable<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> onChange<span class="punct">?</span>: (value: <span class="ty">string</span>, e: <span class="ty">ChangeEvent</span>&lt;<span class="ty">HTMLInputElement</span>&gt;) =&gt; <span class="ty">void</span>;
+}
+
+<span class="kw">export interface</span> <span class="ty">NumberInputProps</span> <span class="kw">extends</span> <span class="ty">Omit</span>&lt;<span class="ty">InputProps</span>, <span class="str">"value"</span> | <span class="str">"onChange"</span> | <span class="str">"type"</span>&gt; {
+  <span class="kw">readonly</span> value<span class="punct">?</span>: <span class="ty">number</span>;
+  <span class="kw">readonly</span> min<span class="punct">?</span>: <span class="ty">number</span>;
+  <span class="kw">readonly</span> max<span class="punct">?</span>: <span class="ty">number</span>;
+  <span class="kw">readonly</span> step<span class="punct">?</span>: <span class="ty">number</span>;
+  <span class="kw">readonly</span> onChange<span class="punct">?</span>: (value: <span class="ty">number</span>) =&gt; <span class="ty">void</span>;
+}
+
+<span class="kw">export interface</span> <span class="ty">PinInputProps</span> <span class="kw">extends</span> <span class="ty">BaseProps</span> {
+  <span class="kw">readonly</span> length: <span class="num">4</span> | <span class="num">6</span> | <span class="num">8</span>;     <span class="cm">// ← literal union, not just `number`</span>
+  <span class="kw">readonly</span> mask<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> onComplete<span class="punct">?</span>: (value: <span class="ty">string</span>) =&gt; <span class="ty">void</span>;
+}</pre>
+  </section>
+
+  <section id="select">
+    <div class="h"><span class="lbl">select</span><h2>Select&lt;V&gt; · Combobox&lt;V&gt;</h2><span class="desc">generic over value type</span></div>
+<pre><span class="cm">// Generic preserves value type from options through to onChange</span>
+<span class="kw">export interface</span> <span class="ty">SelectOption</span>&lt;V <span class="kw">extends</span> <span class="ty">string</span> | <span class="ty">number</span> = <span class="ty">string</span>&gt; {
+  <span class="kw">readonly</span> label: <span class="ty">string</span>;
+  <span class="kw">readonly</span> value: V;
+  <span class="kw">readonly</span> disabled<span class="punct">?</span>: <span class="ty">boolean</span>;
+}
+
+<span class="kw">export interface</span> <span class="ty">SelectProps</span>&lt;V <span class="kw">extends</span> <span class="ty">string</span> | <span class="ty">number</span> = <span class="ty">string</span>&gt; <span class="kw">extends</span> <span class="ty">BaseProps</span> {
+  <span class="kw">readonly</span> options: <span class="kw">readonly</span> <span class="ty">SelectOption</span>&lt;V&gt;[];
+  <span class="kw">readonly</span> value<span class="punct">?</span>: V;
+  <span class="kw">readonly</span> onChange<span class="punct">?</span>: (value: V, option: <span class="ty">SelectOption</span>&lt;V&gt;) =&gt; <span class="ty">void</span>;
+}
+
+<span class="cm">// Usage — V is inferred from options literal</span>
+<span class="kw">type</span> <span class="ty">Region</span> = <span class="str">"us-east-1"</span> | <span class="str">"eu-central-1"</span> | <span class="str">"ap-southeast-1"</span>;
+<span class="kw">const</span> regions<span class="punct">:</span> <span class="kw">readonly</span> <span class="ty">SelectOption</span>&lt;<span class="ty">Region</span>&gt;[] = [
+  { label<span class="punct">:</span> <span class="str">"N. Virginia"</span>, value<span class="punct">:</span> <span class="str">"us-east-1"</span> },
+  { label<span class="punct">:</span> <span class="str">"Frankfurt"</span>,    value<span class="punct">:</span> <span class="str">"eu-central-1"</span> },
+];
+&lt;<span class="ty">Select</span> options={regions} onChange={(v) =&gt; console.log(v)} /&gt;
+                                            <span class="cm">// ↑ v is `Region`, not `string`</span></pre>
+  </section>
+
+  <section id="space">
+    <div class="h"><span class="lbl">layout</span><h2>Space · ScrollDiv</h2><span class="desc">layout primitives</span></div>
+<pre><span class="kw">export interface</span> <span class="ty">SpaceProps</span> <span class="kw">extends</span> <span class="ty">BaseProps</span> {
+  <span class="kw">readonly</span> direction<span class="punct">?</span>: <span class="ty">Direction</span>;
+  <span class="kw">readonly</span> size<span class="punct">?</span>: <span class="ty">SpaceSize</span>;                    <span class="cm">// xs|sm|md|lg|xl|number</span>
+  <span class="kw">readonly</span> align<span class="punct">?</span>: <span class="ty">Align</span>;
+  <span class="kw">readonly</span> justify<span class="punct">?</span>: <span class="ty">Justify</span>;
+  <span class="kw">readonly</span> wrap<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> split<span class="punct">?</span>: <span class="ty">ReactNode</span>;
+  <span class="kw">readonly</span> children: <span class="ty">ReactNode</span>;
+}
+
+<span class="kw">export interface</span> <span class="ty">ScrollDivProps</span> <span class="kw">extends</span> <span class="ty">BaseProps</span> {
+  <span class="kw">readonly</span> direction<span class="punct">?</span>: <span class="ty">Axis</span>;                       <span class="cm">// "x" | "y" | "both"</span>
+  <span class="kw">readonly</span> height<span class="punct">?</span>: <span class="ty">number</span> | <span class="ty">string</span>;
+  <span class="kw">readonly</span> shadow<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> contain<span class="punct">?</span>: <span class="ty">boolean</span>;                      <span class="cm">// overscroll-behavior: contain</span>
+  <span class="kw">readonly</span> children: <span class="ty">ReactNode</span>;
+  <span class="kw">readonly</span> onScroll<span class="punct">?</span>: (s: { scrollTop<span class="punct">:</span> <span class="ty">number</span>; atTop<span class="punct">:</span> <span class="ty">boolean</span>; atBottom<span class="punct">:</span> <span class="ty">boolean</span> }) =&gt; <span class="ty">void</span>;
+}</pre>
+  </section>
+
+  <section id="table">
+    <div class="h"><span class="lbl">data</span><h2>Table&lt;T&gt;</h2><span class="desc">generic over row type · narrowed render</span></div>
+<pre><span class="kw">export interface</span> <span class="ty">TableColumn</span>&lt;T <span class="kw">extends</span> <span class="ty">object</span>, K <span class="kw">extends</span> <span class="kw">keyof</span> T = <span class="kw">keyof</span> T&gt; {
+  <span class="kw">readonly</span> key: <span class="ty">string</span>;
+  <span class="kw">readonly</span> title: <span class="ty">ReactNode</span>;
+  <span class="kw">readonly</span> dataKey<span class="punct">?</span>: K;
+  <span class="kw">readonly</span> width<span class="punct">?</span>: <span class="ty">number</span> | <span class="ty">string</span>;
+  <span class="kw">readonly</span> align<span class="punct">?</span>: <span class="str">"left"</span> | <span class="str">"center"</span> | <span class="str">"right"</span>;
+  <span class="kw">readonly</span> sortable<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> sticky<span class="punct">?</span>: <span class="str">"left"</span> | <span class="str">"right"</span>;
+  <span class="kw">readonly</span> render<span class="punct">?</span>: (value<span class="punct">:</span> T[K], row<span class="punct">:</span> T, index<span class="punct">:</span> <span class="ty">number</span>) =&gt; <span class="ty">ReactNode</span>;
+}                                          <span class="cm">// ↑ value type narrows to T[K]</span>
+
+<span class="cm">// Usage</span>
+<span class="kw">interface</span> <span class="ty">Service</span> { id<span class="punct">:</span> <span class="ty">string</span>; region<span class="punct">:</span> <span class="ty">Region</span>; cpu<span class="punct">:</span> <span class="ty">number</span>; }
+
+<span class="kw">const</span> columns<span class="punct">:</span> <span class="kw">readonly</span> <span class="ty">TableColumn</span>&lt;<span class="ty">Service</span>&gt;[] = [
+  { key<span class="punct">:</span> <span class="str">"id"</span>,     title<span class="punct">:</span> <span class="str">"ID"</span>,     dataKey<span class="punct">:</span> <span class="str">"id"</span> },
+  { key<span class="punct">:</span> <span class="str">"region"</span>, title<span class="punct">:</span> <span class="str">"Region"</span>, dataKey<span class="punct">:</span> <span class="str">"region"</span> },
+  { key<span class="punct">:</span> <span class="str">"cpu"</span>,    title<span class="punct">:</span> <span class="str">"CPU"</span>,    dataKey<span class="punct">:</span> <span class="str">"cpu"</span>,
+    render<span class="punct">:</span> (cpu) =&gt; <span class="punct">`</span>${cpu}%<span class="punct">`</span>     <span class="cm">// ↑ cpu: number, no `as`</span>
+  },
+];
+
+&lt;<span class="ty">Table</span>&lt;<span class="ty">Service</span>&gt; columns={columns} data={services} rowKey="id" /&gt;</pre>
+  </section>
+
+  <section id="chat">
+    <div class="h"><span class="lbl">chat</span><h2>Chat</h2><span class="desc">streaming + attachments</span></div>
+<pre><span class="kw">export type</span> <span class="ty">ChatRole</span> = <span class="str">"user"</span> | <span class="str">"assistant"</span> | <span class="str">"system"</span> | <span class="str">"tool"</span>;
+
+<span class="kw">export interface</span> <span class="ty">ChatMessage</span> {
+  <span class="kw">readonly</span> id: <span class="ty">string</span>;
+  <span class="kw">readonly</span> role: <span class="ty">ChatRole</span>;
+  <span class="kw">readonly</span> content: <span class="ty">ReactNode</span>;
+  <span class="kw">readonly</span> status<span class="punct">?</span>: <span class="str">"sending"</span> | <span class="str">"sent"</span> | <span class="str">"error"</span> | <span class="str">"streaming"</span>;
+  <span class="kw">readonly</span> attachments<span class="punct">?</span>: <span class="kw">readonly</span> { name<span class="punct">:</span> <span class="ty">string</span>; size<span class="punct">:</span> <span class="ty">number</span>; url<span class="punct">?</span>: <span class="ty">string</span> }[];
+}
+
+<span class="kw">export interface</span> <span class="ty">ChatProps</span> <span class="kw">extends</span> <span class="ty">BaseProps</span> {
+  <span class="kw">readonly</span> messages: <span class="kw">readonly</span> <span class="ty">ChatMessage</span>[];
+  <span class="kw">readonly</span> streaming<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> onSend<span class="punct">?</span>: (text<span class="punct">:</span> <span class="ty">string</span>, attachments<span class="punct">:</span> <span class="kw">readonly</span> <span class="ty">File</span>[]) =&gt; <span class="ty">void</span> | <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt;;
+  <span class="kw">readonly</span> onStop<span class="punct">?</span>: () =&gt; <span class="ty">void</span>;
+}</pre>
+  </section>
+
+  <section id="rte">
+    <div class="h"><span class="lbl">rte</span><h2>RichTextEditor</h2><span class="desc">collab + slash + bubble</span></div>
+<pre><span class="kw">export interface</span> <span class="ty">RichTextEditorProps</span> <span class="kw">extends</span> <span class="ty">BaseProps</span> {
+  <span class="kw">readonly</span> value<span class="punct">?</span>: <span class="ty">string</span>;                          <span class="cm">// gfm markdown</span>
+  <span class="kw">readonly</span> toolbar<span class="punct">?</span>: <span class="str">"full"</span> | <span class="str">"compact"</span> | <span class="str">"inline"</span> | <span class="str">"none"</span>;
+  <span class="kw">readonly</span> slashMenu<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> bubbleMenu<span class="punct">?</span>: <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> mentionsSource<span class="punct">?</span>: (q<span class="punct">:</span> <span class="ty">string</span>) =&gt; <span class="ty">Promise</span>&lt;<span class="kw">readonly</span> { id<span class="punct">:</span> <span class="ty">string</span>; label<span class="punct">:</span> <span class="ty">string</span> }[]&gt;;
+  <span class="kw">readonly</span> collab<span class="punct">?</span>: { room<span class="punct">:</span> <span class="ty">string</span>; user<span class="punct">:</span> { id<span class="punct">:</span> <span class="ty">string</span>; name<span class="punct">:</span> <span class="ty">string</span>; color<span class="punct">?:</span> <span class="ty">string</span> } };
+  <span class="kw">readonly</span> onChange<span class="punct">?</span>: (markdown<span class="punct">:</span> <span class="ty">string</span>) =&gt; <span class="ty">void</span>;
+}</pre>
+  </section>
+
+  <section id="terminal">
+    <div class="h"><span class="lbl">terminal</span><h2>Terminal</h2><span class="desc">discriminated line types</span></div>
+<pre><span class="kw">export interface</span> <span class="ty">TerminalLine</span> {
+  <span class="kw">readonly</span> type<span class="punct">:</span> <span class="str">"stdout"</span> | <span class="str">"stderr"</span> | <span class="str">"info"</span> | <span class="str">"warn"</span> | <span class="str">"error"</span> | <span class="str">"debug"</span> | <span class="str">"prompt"</span>;
+  <span class="kw">readonly</span> text<span class="punct">:</span> <span class="ty">string</span>;                            <span class="cm">// ANSI sequences allowed</span>
+  <span class="kw">readonly</span> timestamp<span class="punct">?:</span> <span class="ty">Date</span>;
+}
+
+<span class="kw">export interface</span> <span class="ty">TerminalProps</span> <span class="kw">extends</span> <span class="ty">BaseProps</span> {
+  <span class="kw">readonly</span> lines<span class="punct">:</span> <span class="kw">readonly</span> <span class="ty">TerminalLine</span>[];
+  <span class="kw">readonly</span> tabs<span class="punct">?:</span> <span class="kw">readonly</span> { key<span class="punct">:</span> <span class="ty">string</span>; label<span class="punct">:</span> <span class="ty">string</span>; active<span class="punct">?:</span> <span class="ty">boolean</span> }[];
+  <span class="kw">readonly</span> streaming<span class="punct">?:</span> <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> searchable<span class="punct">?:</span> <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> onInput<span class="punct">?:</span> (cmd<span class="punct">:</span> <span class="ty">string</span>) =&gt; <span class="ty">void</span>;
+  <span class="kw">readonly</span> onTabChange<span class="punct">?:</span> (key<span class="punct">:</span> <span class="ty">string</span>) =&gt; <span class="ty">void</span>;
+}</pre>
+  </section>
+
+  <section id="code">
+    <div class="h"><span class="lbl">code</span><h2>CodeBlock · Markdown</h2><span class="desc">literal language union</span></div>
+<pre><span class="kw">export type</span> <span class="ty">CodeLanguage</span> =
+  | <span class="str">"ts"</span> | <span class="str">"tsx"</span> | <span class="str">"js"</span> | <span class="str">"jsx"</span>
+  | <span class="str">"json"</span> | <span class="str">"yaml"</span> | <span class="str">"toml"</span>
+  | <span class="str">"bash"</span> | <span class="str">"sh"</span> | <span class="str">"zsh"</span>
+  | <span class="str">"py"</span> | <span class="str">"go"</span> | <span class="str">"rust"</span>
+  | <span class="str">"html"</span> | <span class="str">"css"</span> | <span class="str">"sql"</span>
+  | <span class="str">"diff"</span> | <span class="str">"plain"</span>;
+
+<span class="kw">export interface</span> <span class="ty">CodeBlockProps</span> <span class="kw">extends</span> <span class="ty">BaseProps</span> {
+  <span class="kw">readonly</span> code<span class="punct">:</span> <span class="ty">string</span>;
+  <span class="kw">readonly</span> language<span class="punct">?:</span> <span class="ty">CodeLanguage</span>;                <span class="cm">// ← typo-proof</span>
+  <span class="kw">readonly</span> filename<span class="punct">?:</span> <span class="ty">string</span>;
+  <span class="kw">readonly</span> showLineNumbers<span class="punct">?:</span> <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> highlightLines<span class="punct">?:</span> <span class="kw">readonly</span> <span class="ty">number</span>[];
+  <span class="kw">readonly</span> copyable<span class="punct">?:</span> <span class="ty">boolean</span>;
+  <span class="kw">readonly</span> onCopy<span class="punct">?:</span> () =&gt; <span class="ty">void</span>;
+}</pre>
+  </section>
+
+  <section id="toast">
+    <div class="h"><span class="lbl">imperative</span><h2>toast api</h2><span class="desc">imperative · global</span></div>
+<pre><span class="kw">export interface</span> <span class="ty">ToastApi</span> {
+  show(opts<span class="punct">:</span> <span class="ty">ToastOptions</span>)<span class="punct">:</span> <span class="ty">string</span>;
+  dismiss(id<span class="punct">:</span> <span class="ty">string</span>)<span class="punct">:</span> <span class="ty">void</span>;
+  promise&lt;T&gt;(p<span class="punct">:</span> <span class="ty">Promise</span>&lt;T&gt;, msgs<span class="punct">:</span> { loading<span class="punct">:</span> <span class="ty">string</span>; success<span class="punct">:</span> <span class="ty">string</span>; error<span class="punct">:</span> <span class="ty">string</span> })<span class="punct">:</span> <span class="ty">Promise</span>&lt;T&gt;;
+}
+
+<span class="cm">// Usage</span>
+<span class="kw">await</span> toast.promise(rcs.deploy(<span class="str">"vault-primary"</span>), {
+  loading<span class="punct">:</span> <span class="str">"Deploying…"</span>,
+  success<span class="punct">:</span> <span class="str">"Deployed."</span>,
+  error<span class="punct">:</span>   <span class="str">"Deploy failed."</span>,
+});</pre>
+  </section>
+
+  <section id="all">
+    <div class="h"><span class="lbl">surface</span><h2>Full export surface</h2><span class="desc">30 components</span></div>
+    <div class="grid">
+      <div class="pill">Button<span class="ext">.tsx</span></div>
+      <div class="pill">IconButton<span class="ext">.tsx</span></div>
+      <div class="pill">ButtonGroup<span class="ext">.tsx</span></div>
+      <div class="pill">Input<span class="ext">.tsx</span></div>
+      <div class="pill">NumberInput<span class="ext">.tsx</span></div>
+      <div class="pill">PinInput<span class="ext">.tsx</span></div>
+      <div class="pill">Textarea<span class="ext">.tsx</span></div>
+      <div class="pill">Select&lt;V&gt;<span class="ext">.tsx</span></div>
+      <div class="pill">Combobox&lt;V&gt;<span class="ext">.tsx</span></div>
+      <div class="pill">Checkbox<span class="ext">.tsx</span></div>
+      <div class="pill">RadioGroup&lt;V&gt;<span class="ext">.tsx</span></div>
+      <div class="pill">Switch<span class="ext">.tsx</span></div>
+      <div class="pill">Slider<span class="ext">.tsx</span></div>
+      <div class="pill">DatePicker<span class="ext">.tsx</span></div>
+      <div class="pill">DateRangePicker<span class="ext">.tsx</span></div>
+      <div class="pill">FileUpload<span class="ext">.tsx</span></div>
+      <div class="pill">FormField<span class="ext">.tsx</span></div>
+      <div class="pill">Badge<span class="ext">.tsx</span></div>
+      <div class="pill">StatusDot<span class="ext">.tsx</span></div>
+      <div class="pill">Card<span class="ext">.tsx</span></div>
+      <div class="pill">Space<span class="ext">.tsx</span></div>
+      <div class="pill">ScrollDiv<span class="ext">.tsx</span></div>
+      <div class="pill">Divider<span class="ext">.tsx</span></div>
+      <div class="pill">Grid<span class="ext">.tsx</span></div>
+      <div class="pill">Tabs&lt;K&gt;<span class="ext">.tsx</span></div>
+      <div class="pill">Menu&lt;K&gt;<span class="ext">.tsx</span></div>
+      <div class="pill">Breadcrumb<span class="ext">.tsx</span></div>
+      <div class="pill">Pagination<span class="ext">.tsx</span></div>
+      <div class="pill">Steps<span class="ext">.tsx</span></div>
+      <div class="pill">Alert<span class="ext">.tsx</span></div>
+      <div class="pill">Modal<span class="ext">.tsx</span></div>
+      <div class="pill">Drawer<span class="ext">.tsx</span></div>
+      <div class="pill">Progress<span class="ext">.tsx</span></div>
+      <div class="pill">Skeleton<span class="ext">.tsx</span></div>
+      <div class="pill">Spin<span class="ext">.tsx</span></div>
+      <div class="pill">Tooltip<span class="ext">.tsx</span></div>
+      <div class="pill">Table&lt;T&gt;<span class="ext">.tsx</span></div>
+      <div class="pill">Stat<span class="ext">.tsx</span></div>
+      <div class="pill">Avatar<span class="ext">.tsx</span></div>
+      <div class="pill">Timeline<span class="ext">.tsx</span></div>
+      <div class="pill">Chat<span class="ext">.tsx</span></div>
+      <div class="pill">CodeBlock<span class="ext">.tsx</span></div>
+      <div class="pill">Markdown<span class="ext">.tsx</span></div>
+      <div class="pill">Terminal<span class="ext">.tsx</span></div>
+      <div class="pill">RichTextEditor<span class="ext">.tsx</span></div>
+      <div class="pill">PageHeader<span class="ext">.tsx</span></div>
+      <div class="pill">AppShell<span class="ext">.tsx</span></div>
+      <div class="pill">ThemeProvider<span class="ext">.tsx</span></div>
+      <div class="pill">toast<span class="ext">api</span></div>
+    </div>
+  </section>
+
+</main>
+</body></html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Responsive · device check</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;background:#F5F5F5;font-family:var(--font-sans);color:#1C1C1C;}
+  header{position:sticky;top:0;background:#1C1C1C;color:#FFFFFF;padding:14px 20px;z-index:10;display:flex;flex-wrap:wrap;gap:14px;align-items:center;border-bottom:1px solid rgba(255,255,255,0.10);}
+  header h1{font-size:14px;font-weight:600;margin:0;letter-spacing:-0.01em;}
+  header .lbl{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.50);margin-right:6px;}
+  header select{font-family:var(--font-mono);font-size:11px;background:#0F0F12;color:#FFFFFF;border:1px solid rgba(255,255,255,0.14);border-radius:3px;padding:5px 8px;}
+  header .live{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:#FF6B6B;}
+  main{padding:24px 20px;display:flex;justify-content:center;background:repeating-linear-gradient(45deg,#FAFAFA 0 12px,#F5F5F5 12px 24px);}
+  .device{background:#FFFFFF;border:1px solid rgba(28,28,28,0.14);border-radius:14px;padding:10px;box-shadow:0 12px 36px rgba(28,28,28,0.10);transition:width 220ms ease;}
+  .device .frame{border:1px solid rgba(28,28,28,0.10);border-radius:6px;overflow:hidden;background:#FFFFFF;}
+  .device .meta{font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#5A5A5A;padding:6px 4px 8px;display:flex;justify-content:space-between;}
+  iframe{display:block;border:none;width:100%;background:#FFFFFF;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Responsive component check</h1>
+  <span class="lbl">device</span>
+  <select id="dev">
+    <option value="360,780">Galaxy S24 · 360 × 780</option>
+    <option value="412,915">Galaxy S24 Ultra · 412 × 915</option>
+    <option value="393,852" selected>iPhone 15 · 393 × 852</option>
+    <option value="430,932">iPhone 15 Pro Max · 430 × 932</option>
+    <option value="744,1133">iPad mini · 744 × 1133</option>
+    <option value="834,1194">iPad Pro 11" · 834 × 1194</option>
+    <option value="1024,1366">iPad Pro 13" landscape · 1024 × 1366</option>
+    <option value="1280,820">Desktop · 1280 × 820</option>
+    <option value="1440,900">Desktop · 1440 × 900</option>
+  </select>
+  <span class="lbl">card</span>
+  <select id="card">
+    <option>components-buttons</option>
+    <option>components-form</option>
+    <option>components-inputs-extras</option>
+    <option>components-data</option>
+    <option>components-table</option>
+    <option>components-data-entry</option>
+    <option>components-navigation</option>
+    <option>components-layout</option>
+    <option>components-feedback</option>
+    <option>components-feedback-extras</option>
+    <option>components-data-display-extras</option>
+    <option>components-cards</option>
+    <option>components-chat</option>
+    <option>components-tabs</option>
+    <option>components-menu</option>
+    <option>components-pageheader</option>
+    <option>components-code</option>
+    <option>components-markdown</option>
+    <option>components-terminal</option>
+    <option>components-badges</option>
+    <option>components-inputs</option>
+  </select>
+  <span class="live" id="live">393 × 852</span>
+</header>
+<main>
+  <div class="device" id="device">
+    <div class="meta"><span id="m1">iPhone 15</span><span id="m2">393 × 852</span></div>
+    <div class="frame"><iframe id="frame" src="components-buttons.html"></iframe></div>
+  </div>
+</main>
+<script>
+  const dev = document.getElementById('dev');
+  const card = document.getElementById('card');
+  const device = document.getElementById('device');
+  const frame = document.getElementById('frame');
+  const live = document.getElementById('live');
+  const m1 = document.getElementById('m1');
+  const m2 = document.getElementById('m2');
+  function apply(){
+    const [w,h] = dev.value.split(',').map(Number);
+    device.style.width = (w+2) + 'px';
+    frame.style.width  = w + 'px';
+    frame.style.height = h + 'px';
+    live.textContent = w + ' × ' + h;
+    m1.textContent = dev.options[dev.selectedIndex].textContent.split('·')[0].trim();
+    m2.textContent = w + ' × ' + h;
+  }
+  function load(){ frame.src = card.value + '.html'; }
+  dev.onchange = apply;
+  card.onchange = load;
+  apply();
+</script>
+</body></html>

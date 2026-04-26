@@ -12,6 +12,11 @@ on:
       - "assets/**"
       - "preview/**"
       - "ui_kits/**"
+      - "src/components.d.ts"
+      - "src/tokens.ts"
+      - "src/index.tsx"
+      - "scripts/build-docs.mjs"
+      - "package.json"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -80,6 +85,12 @@ jobs:
             echo '</main></body></html>'
           } > _site/preview/index.html
 
+      - name: Generate docs/index.html
+        run: |
+          set -euo pipefail
+          mkdir -p _site/docs
+          node scripts/build-docs.mjs _site/docs
+
       - name: Generate root index.html
         run: |
           set -euo pipefail
@@ -117,6 +128,17 @@ jobs:
               <p class="eyebrow">RandomCodeSpace · design system</p>
               <h1>Tools you own.</h1>
               <p class="lede">Live demos of the <code>@ossrandom/design-system</code> component library. Inter on Cod Gray, Signal Red on monochrome surfaces. Built for self-hosted developer tooling.</p>
+
+              <section>
+                <h2>API reference</h2>
+                <div class="grid">
+                  <a class="card" href="docs/">
+                    <div class="label">/docs/</div>
+                    <div class="name">Components &amp; types</div>
+                    <div class="desc">Auto-generated reference for every component, hook, prop interface, and design token.</div>
+                  </a>
+                </div>
+              </section>
 
               <section>
                 <h2>UI kits</h2>

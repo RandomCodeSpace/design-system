@@ -29,7 +29,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { EXAMPLES, autoScaffold } from "./component-examples.mjs";
+import { generateDemos } from "./component-examples.mjs";
 
 const root = process.cwd();
 const outDir = resolve(root, process.argv[2] || "_site");
@@ -160,7 +160,11 @@ function escapeHtml(s) {
 }
 function code(s) { return `<code>${escapeHtml(s)}</code>`; }
 function findPropsFor(name) { return interfaceByName.get(name + "Props") || null; }
-function getExample(name) { return EXAMPLES[name] || autoScaffold(name, findPropsFor(name)); }
+const TYPE_ALIASES = new Map([
+  ...componentTypeAliases.map((a) => [a.name, a.value]),
+  ...tokenTypeAliases.map((a) => [a.name, a.value]),
+]);
+function getDemos(name) { return generateDemos(name, findPropsFor(name), { typeAliases: TYPE_ALIASES }); }
 function findRelatedTypes(iface) {
   if (!iface) return [];
   const set = new Set();
@@ -419,9 +423,41 @@ function renderDocsCss() {
   grid-template-columns: 264px minmax(0, 1fr);
   align-items: stretch;
 }
+.docs-aside-toggle { display: none; }
+
 @media (max-width: 880px) {
   .docs-layout { grid-template-columns: 1fr; }
-  .docs-aside { position: static !important; height: auto !important; border-right: none !important; border-bottom: 1px solid var(--border-1); }
+  .docs-aside {
+    position: fixed; top: 52px; left: 0; bottom: 0;
+    width: 280px; max-width: 86vw; z-index: 90;
+    background: var(--bg-0);
+    border-right: 1px solid var(--border-1) !important;
+    border-bottom: none !important;
+    transform: translateX(-100%);
+    transition: transform 220ms cubic-bezier(0.25,1,0.5,1);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+  }
+  .docs-aside.open { transform: translateX(0); }
+  .docs-aside-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    position: sticky; top: 52px; z-index: 80;
+    padding: 10px 16px; height: 40px;
+    background: var(--bg-0); border: none;
+    border-bottom: 1px solid var(--border-1);
+    color: var(--fg-1); font-family: var(--font-mono); font-size: 11.5px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    cursor: pointer; width: 100%; justify-content: flex-start;
+  }
+  .docs-aside-toggle .hb {
+    display: block; width: 16px; height: 1.5px; background: var(--fg-2);
+    margin-right: 0;
+  }
+  .docs-aside-toggle .hb + .hb { margin-top: 3px; }
+  .docs-aside-toggle .hb:nth-of-type(1),
+  .docs-aside-toggle .hb:nth-of-type(2),
+  .docs-aside-toggle .hb:nth-of-type(3) {
+    display: inline-block; vertical-align: middle;
+  }
 }
 .docs-aside {
   position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto;
@@ -509,6 +545,68 @@ function renderDocsCss() {
   position: absolute; top: 8px; right: 12px;
   font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
   color: var(--fg-4);
+}
+
+/* ── Ant-Design-style demo cards ─────────────────────────────────────── */
+.block.demos { margin-bottom: 48px; }
+.block.demos > h2 { margin-bottom: 16px; }
+.demo {
+  border: 1px solid var(--border-1); border-radius: 4px;
+  background: var(--bg-1);
+  margin: 0 0 20px;
+  overflow: hidden;
+  transition: border-color 140ms;
+}
+.demo:hover { border-color: var(--border-2); }
+.demo-render {
+  padding: 36px 32px;
+  border-bottom: 1px solid var(--border-1);
+  background: var(--bg-1);
+  position: relative;
+  min-height: 80px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+}
+@media (max-width: 720px) { .demo-render { padding: 24px 18px; } }
+.demo-meta {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; padding: 14px 18px;
+  background: var(--bg-1);
+}
+@media (max-width: 720px) {
+  .demo-meta { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; }
+}
+.demo-meta-text { flex: 1; min-width: 0; }
+.demo-meta-text h3 {
+  margin: 0 0 2px; font-size: 13px; font-weight: 600; color: var(--fg-1);
+  font-family: var(--font-sans); letter-spacing: -0.005em;
+}
+.demo-meta-text p { margin: 0; color: var(--fg-3); font-size: 12px; line-height: 1.5; }
+.demo-meta-actions {
+  display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap;
+}
+.demo-action {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: transparent; color: var(--fg-3);
+  border: 1px solid var(--border-1); border-radius: 4px;
+  padding: 4px 10px; font-family: var(--font-mono); font-size: 11px;
+  cursor: pointer; text-decoration: none;
+  transition: background 140ms cubic-bezier(0.25,1,0.5,1), color 140ms, border-color 140ms;
+}
+.demo-action:hover {
+  background: var(--bg-2); color: var(--fg-1);
+  border-color: var(--border-2); opacity: 1;
+}
+.demo-code {
+  border-top: 1px solid var(--border-1);
+  background: var(--bg-2);
+  padding: 16px 20px;
+  overflow-x: auto;
+}
+.demo-code[hidden] { display: none; }
+.demo-code pre { margin: 0; }
+.demo-code code {
+  font-family: var(--font-mono); font-size: 12.5px;
+  color: var(--fg-1); line-height: 1.55; white-space: pre;
 }
 
 table.props { width: 100%; border-collapse: collapse; border: 1px solid var(--border-1); border-radius: 4px; overflow: hidden; }
@@ -887,7 +985,7 @@ function renderComponentPage(name) {
   const generics = iface?.generics || "";
   const cat = categoryForExport(name);
   const srcFile = runtimeExports.get(name);
-  const example = getExample(name);
+  const demos = getDemos(name);
   const importLine = `import { ${name} } from "${pkg.name}";`;
   const inheritance = iface?.extends ? `<p class="inherits">extends ${code(iface.extends)}</p>` : "";
   const related = findRelatedTypes(iface);
@@ -899,15 +997,39 @@ function renderComponentPage(name) {
       </article>`).join("")}
     </section>`;
 
+  const demosHtml = demos.map((d, i) => `
+    <article class="demo" id="demo-${i}">
+      <div class="demo-render" id="demo-render-${i}"></div>
+      <div class="demo-meta">
+        <div class="demo-meta-text">
+          <h3>${escapeHtml(d.title)}</h3>
+          ${d.description ? `<p>${escapeHtml(d.description)}</p>` : ""}
+        </div>
+        <div class="demo-meta-actions">
+          <button type="button" class="demo-action" data-action="copy" data-target="${i}" title="Copy code">⎘ Copy</button>
+          <a class="demo-action" href="../playground/?code=${encodeForUrl(d.code)}" target="_blank" rel="noopener" title="Open in playground">↗ Playground</a>
+          <button type="button" class="demo-action demo-toggle" data-target="${i}" aria-expanded="false">‹/› Show code</button>
+        </div>
+      </div>
+      <div class="demo-code" id="demo-code-${i}" hidden>
+        <pre><code class="lang-tsx">${escapeHtml(d.code)}</code></pre>
+      </div>
+    </article>
+  `).join("");
+
   const body = `<div class="docs-layout">
-  <aside class="docs-aside">
+  <aside class="docs-aside" id="docs-aside">
     <div class="filter"><input type="search" placeholder="Filter components…" id="docs-filter" autocomplete="off" spellcheck="false"></div>
     ${renderSidebar(name)}
   </aside>
+  <button type="button" class="docs-aside-toggle" id="docs-aside-toggle" aria-label="Toggle sidebar" aria-controls="docs-aside" aria-expanded="false">
+    <span class="hb"></span><span class="hb"></span><span class="hb"></span>
+    <span>Components</span>
+  </button>
   <main class="docs-main">
     <header class="page-head">
       <div class="crumbs">
-        <a href="..">Components</a><span class="sep">/</span>${escapeHtml(cat?.label || "Other")}<span class="sep">/</span><span style="color:var(--fg-2)">${escapeHtml(name)}</span>
+        <a href="..">Components</a><span class="sep">/</span><span>${escapeHtml(cat?.label || "Other")}</span><span class="sep">/</span><span class="crumb-now">${escapeHtml(name)}</span>
       </div>
       <span class="kind">${isHook ? "hook" : "component"}</span>
       <h1>${escapeHtml(name)}<span class="generics">${escapeHtml(generics)}</span></h1>
@@ -919,15 +1041,9 @@ function renderComponentPage(name) {
       <pre class="snippet"><code>${escapeHtml(importLine)}</code></pre>
     </section>
 
-    <section class="block">
-      <h2>Live preview</h2>
-      <div class="preview-frame" id="preview"></div>
-    </section>
-
-    <section class="block">
-      <h2>Example</h2>
-      <pre class="snippet"><code class="lang-tsx">${escapeHtml(example)}</code></pre>
-      <a class="btn-primary" href="../playground/?code=${encodeForUrl(example)}">Edit in playground →</a>
+    <section class="block demos">
+      <h2>Examples</h2>
+      ${demosHtml}
     </section>
 
     <section class="block">
@@ -944,22 +1060,81 @@ function renderComponentPage(name) {
   <link rel="stylesheet" href="../../dist/styles.css">
   <link rel="stylesheet" href="../docs.css">`;
 
+  // Build a script that runs each demo and wires up copy / toggle / sidebar drawer.
+  const runCalls = demos.map((d, i) => `runExample(${JSON.stringify(d.code)}, "demo-render-${i}");`).join("\n      ");
+  const codeJson = JSON.stringify(demos.map((d) => d.code));
+
   const tail = `
   <script src="../bundle/rcs.iife.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
   <script src="../runner.js"></script>
-  <script>runExample(${JSON.stringify(example)}, "preview");</script>
   <script>
     (function () {
+      var DEMO_CODES = ${codeJson};
+      function runAll() {
+        if (typeof runExample !== 'function') {
+          document.querySelectorAll('.demo-render').forEach(function (el) {
+            el.innerHTML = '<div class="err">runner.js failed to load</div>';
+          });
+          return;
+        }
+        ${runCalls}
+      }
+      // Toggle code panel
+      document.querySelectorAll('.demo-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var i = btn.getAttribute('data-target');
+          var panel = document.getElementById('demo-code-' + i);
+          var open = !panel.hasAttribute('hidden');
+          if (open) { panel.setAttribute('hidden', ''); btn.setAttribute('aria-expanded', 'false'); btn.textContent = '‹/› Show code'; }
+          else { panel.removeAttribute('hidden'); btn.setAttribute('aria-expanded', 'true'); btn.textContent = '‹/› Hide code'; }
+        });
+      });
+      // Copy code
+      document.querySelectorAll('[data-action="copy"]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var i = btn.getAttribute('data-target');
+          var code = DEMO_CODES[parseInt(i, 10)];
+          if (!code) return;
+          var orig = btn.textContent;
+          (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(function () {
+            btn.textContent = '✓ Copied';
+            setTimeout(function () { btn.textContent = orig; }, 1200);
+          }).catch(function () {
+            try {
+              var ta = document.createElement('textarea');
+              ta.value = code; document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+              document.body.removeChild(ta);
+              btn.textContent = '✓ Copied';
+              setTimeout(function () { btn.textContent = orig; }, 1200);
+            } catch (e) { btn.textContent = '✕ Failed'; setTimeout(function () { btn.textContent = orig; }, 1200); }
+          });
+        });
+      });
+      // Sidebar drawer toggle (mobile)
+      var asideToggle = document.getElementById('docs-aside-toggle');
+      var aside = document.getElementById('docs-aside');
+      if (asideToggle && aside) {
+        asideToggle.addEventListener('click', function () {
+          var open = aside.classList.toggle('open');
+          asideToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        aside.addEventListener('click', function (e) {
+          if (e.target.tagName === 'A') aside.classList.remove('open');
+        });
+      }
+      // Filter
       var input = document.getElementById('docs-filter');
-      if (!input) return;
-      input.addEventListener('input', function () {
+      if (input) input.addEventListener('input', function () {
         var q = input.value.trim().toLowerCase();
         document.querySelectorAll('.docs-aside .nav ul li').forEach(function (li) {
           var t = li.textContent.toLowerCase();
           li.style.display = t.indexOf(q) >= 0 ? '' : 'none';
         });
       });
+      // Run demos as soon as bundle + babel are ready.
+      if (window.RCS && window.Babel) runAll();
+      else window.addEventListener('load', runAll);
     })();
   </script>`;
 
@@ -967,7 +1142,8 @@ function renderComponentPage(name) {
 }
 
 function renderPlaygroundPage() {
-  const DEFAULT_EXAMPLE = EXAMPLES.Button;
+  const buttonDemos = getDemos("Button");
+  const DEFAULT_EXAMPLE = buttonDemos[0]?.code || `<Button>Click me</Button>`;
   const body = `<div class="pg-layout">
   <section class="pg-editor">
     <header class="pg-bar">

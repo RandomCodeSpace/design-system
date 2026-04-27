@@ -40,7 +40,6 @@ jobs:
 
       - name: Test
         run: pnpm run test
-        continue-on-error: true   # remove once tests land
 
       - name: Build
         run: pnpm run build

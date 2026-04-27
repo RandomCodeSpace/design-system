@@ -45,31 +45,8 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Stage static assets into _site/
-        run: |
-          set -euo pipefail
-          mkdir -p _site
-          cp colors_and_type.css _site/
-          cp -r assets _site/
-          cp -r preview _site/
-          cp -r ui_kits _site/
-
-      - name: Build component IIFE bundle (esbuild)
-        run: |
-          set -euo pipefail
-          mkdir -p _site/docs/bundle
-          npx --yes esbuild@0.24.0 scripts/bundle-entry.ts \
-            --bundle \
-            --format=iife \
-            --global-name=RCS \
-            --outfile=_site/docs/bundle/rcs.iife.js \
-            --target=es2020 \
-            --jsx=automatic \
-            --minify \
-            --define:process.env.NODE_ENV='"production"'
-
-      - name: Generate site (root + apps + docs + playground + per-component)
-        run: node scripts/build-docs.mjs _site
+      - name: Build site (stage assets + esbuild bundle + docs + llms.txt)
+        run: pnpm run build:site
 
       - name: Configure Pages
         uses: actions/configure-pages@v6

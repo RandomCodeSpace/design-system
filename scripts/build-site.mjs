@@ -52,5 +52,7 @@ if (r1.status !== 0) process.exit(r1.status ?? 1);
 const r2 = spawnSync(process.execPath, ["scripts/build-docs.mjs", out], { stdio: "inherit" });
 if (r2.status !== 0) process.exit(r2.status ?? 1);
 
-// Touch a sentinel to confirm a complete build.
+const r3 = spawnSync(process.execPath, ["scripts/build-llms.mjs", out], { stdio: "inherit" });
+if (r3.status !== 0) process.exit(r3.status ?? 1);
+
 console.log(`build-site ✓ ${out.replace(root + sep, "")}/`);

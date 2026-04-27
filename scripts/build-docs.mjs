@@ -30,6 +30,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { generateDemos } from "./component-examples.mjs";
+import { extractInterfaces, extractTypeAliases, parseRuntimeExports } from "./parse-source.mjs";
 
 const root = process.cwd();
 const outDir = resolve(root, process.argv[2] || "_site");
@@ -44,86 +45,8 @@ const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 
 const REPO_URL = "https://github.com/RandomCodeSpace/design-system";
 
-// ─── 1. Parse runtime exports → category file ─────────────────────────
-const runtimeExports = new Map();
-{
-  const re = /export\s*\{\s*([\s\S]+?)\s*\}\s*from\s*"\.\/components\/([^"]+)"/g;
-  let m;
-  while ((m = re.exec(indexTsx))) {
-    for (const name of m[1].split(",").map((s) => s.trim()).filter(Boolean)) {
-      runtimeExports.set(name, m[2]);
-    }
-  }
-}
-
-// ─── 2. Parse components.d.ts and tokens.ts ───────────────────────────
-function tokenizeStatementsAtTopLevel(src) {
-  const out = [];
-  let depth = 0, buf = "", inStr = null, lineComment = false, blockComment = false;
-  for (let i = 0; i < src.length; i++) {
-    const c = src[i], n = src[i + 1];
-    if (lineComment) { buf += c; if (c === "\n") lineComment = false; continue; }
-    if (blockComment) { buf += c; if (c === "*" && n === "/") { buf += "/"; i++; blockComment = false; } continue; }
-    if (inStr) { buf += c; if (c === inStr && src[i - 1] !== "\\") inStr = null; continue; }
-    if (c === "/" && n === "/") { lineComment = true; buf += c; continue; }
-    if (c === "/" && n === "*") { blockComment = true; buf += c; continue; }
-    if (c === '"' || c === "'" || c === "`") { inStr = c; buf += c; continue; }
-    if ("<({[".includes(c)) depth++;
-    else if (">)}]".includes(c)) depth--;
-    if (c === ";" && depth === 0) { out.push(buf.trim()); buf = ""; }
-    else buf += c;
-  }
-  if (buf.trim()) out.push(buf.trim());
-  return out;
-}
-function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "").trim(); }
-
-function extractInterfaces(src) {
-  const out = [];
-  const re = /export\s+interface\s+(\w+)(\s*<[^{>]*(?:>[^{]*)*>)?\s*(?:extends\s+([^{]+?))?\s*\{/g;
-  let m;
-  while ((m = re.exec(src))) {
-    const start = re.lastIndex;
-    let depth = 1, i = start;
-    while (i < src.length && depth > 0) {
-      if (src[i] === "{") depth++;
-      else if (src[i] === "}") depth--;
-      i++;
-    }
-    out.push({
-      name: m[1],
-      generics: (m[2] || "").trim(),
-      extends: (m[3] || "").trim(),
-      props: parseInterfaceMembers(src.slice(start, i - 1)),
-    });
-    re.lastIndex = i;
-  }
-  return out;
-}
-function parseInterfaceMembers(body) {
-  const stmts = tokenizeStatementsAtTopLevel(body);
-  const props = [];
-  for (const raw of stmts) {
-    const stmt = stripComments(raw);
-    if (!stmt) continue;
-    const m = stmt.match(/^(readonly\s+)?(\[[^\]]+\]|"[^"]+"|'[^']+'|\w+)(\?)?\s*:\s*([\s\S]+)$/);
-    if (!m) continue;
-    let name = m[2];
-    if (name.startsWith('"') || name.startsWith("'")) name = name.slice(1, -1);
-    props.push({ readonly: !!m[1], name, optional: !!m[3], type: m[4].trim().replace(/\s+/g, " ") });
-  }
-  return props;
-}
-function extractTypeAliases(src) {
-  const out = [];
-  const re = /export\s+type\s+(\w+)(\s*<[^=]*>)?\s*=\s*([\s\S]+?);/g;
-  let m;
-  while ((m = re.exec(src))) {
-    out.push({ name: m[1], generics: (m[2] || "").trim(), value: m[3].trim().replace(/\s+/g, " ") });
-  }
-  return out;
-}
-
+// ─── 1. Parse runtime exports + interfaces + token aliases ────────────
+const runtimeExports = parseRuntimeExports(indexTsx);
 const interfaces = extractInterfaces(componentsDts);
 const componentTypeAliases = extractTypeAliases(componentsDts);
 const tokenTypeAliases = extractTypeAliases(tokensTs);

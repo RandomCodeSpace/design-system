@@ -6,7 +6,10 @@ Signal Red on Cod Gray. Inter for UI, JetBrains Mono for code. Built for self-ho
 
 **📖 [Live docs · live previews · playground](https://randomcodespace.github.io/design-system/)** — auto-generated component reference at `randomcodespace.github.io/design-system`.
 
+**🤖 For AI agents** — point your tooling at [`llms.txt`](https://randomcodespace.github.io/design-system/llms.txt) (concise) or [`llms-full.txt`](https://randomcodespace.github.io/design-system/llms-full.txt) (every prop signature + canonical example). Both auto-regenerate on every push.
+
 [![CI](https://github.com/RandomCodeSpace/design-system/actions/workflows/ci.yml/badge.svg)](https://github.com/RandomCodeSpace/design-system/actions/workflows/ci.yml)
+[![E2E](https://github.com/RandomCodeSpace/design-system/actions/workflows/e2e.yml/badge.svg)](https://github.com/RandomCodeSpace/design-system/actions/workflows/e2e.yml)
 [![Release](https://github.com/RandomCodeSpace/design-system/actions/workflows/release.yml/badge.svg)](https://github.com/RandomCodeSpace/design-system/actions/workflows/release.yml)
 [![Pages](https://github.com/RandomCodeSpace/design-system/actions/workflows/pages.yml/badge.svg)](https://randomcodespace.github.io/design-system/)
 
@@ -69,7 +72,7 @@ export function Dashboard({ services }: { services: readonly Service[] }) {
 
 ## What's in the box
 
-- **49 working React components** — Buttons, Inputs, Form controls, Layout primitives, Navigation, Feedback, Data display, Chat, Code/Markdown/Terminal/RTE, plus `ThemeProvider` + imperative `toast`
+- **50+ React components** — Buttons, Inputs, Form controls, Layout primitives, Navigation, Feedback, Data display, Chat, Code/Markdown/Terminal/RTE, plus `ThemeProvider` + imperative `toast`
 - **Strongly-typed token unions** (`Size`, `SpaceSize`, `Radius`, `ThemeMode`, `BrandColor`, `Direction`, `Axis`, …)
 - **Generic components**: `Select<V>`, `Combobox<V>`, `Tabs<K>`, `Menu<K>`, `RadioGroup<V>`, `Table<T>`
 - **Strict TypeScript** — full type definitions emitted to `dist/`, source maps + declaration maps included
@@ -136,14 +139,19 @@ import { ThemeProvider, ToastRegion, toast } from "@ossrandom/design-system";
 
 ```bash
 pnpm install
-pnpm typecheck       # tsc --noEmit
-pnpm lint            # eslint src/**/*.{ts,tsx}
-pnpm test            # vitest
-pnpm build           # emits dist/ with .d.ts + .js + styles.css
-pnpm preview         # open preview/responsive-check.html
+pnpm typecheck            # tsc --noEmit
+pnpm lint                 # eslint src/**/*.{ts,tsx}
+pnpm test                 # vitest — 128 unit tests, jsdom + RTL
+pnpm test:coverage        # vitest with v8 coverage
+pnpm build                # emits dist/ with .d.ts + .js + styles.css
+pnpm build:site           # builds the full Pages site → _site/
+pnpm test:e2e:install     # one-time: download Playwright Chromium
+pnpm test:e2e             # 28 e2e tests against the built _site (desktop + mobile)
 ```
 
-The build script runs `tsc -p tsconfig.build.json` then concatenates `colors_and_type.css` + `src/styles.css` into `dist/styles.css`. The result is a publish-ready `dist/` folder containing `.js`, `.d.ts`, source maps, declaration maps, and the merged stylesheet. CI runs typecheck → lint → test → build on every push and PR.
+The build script runs `tsc -p tsconfig.build.json` then concatenates `colors_and_type.css` + `src/styles.css` into `dist/styles.css`. The result is a publish-ready `dist/` folder containing `.js`, `.d.ts`, source maps, declaration maps, and the merged stylesheet.
+
+**CI:** `ci.yml` runs typecheck → lint → test → build on every push/PR. `e2e.yml` runs the Playwright suite. `pages.yml` redeploys the docs site (and `llms.txt`) on every push to `main`.
 
 ## Releases
 

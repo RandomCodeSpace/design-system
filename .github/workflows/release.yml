@@ -88,10 +88,29 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           scope: "@ossrandom"
 
+      - name: Skip if version already on npm
+        id: npm-check
+        # `npm view` against the configured registry returns 0 if the
+        # version exists, non-zero otherwise. Lets re-running the same
+        # tag (e.g. after a downstream failure) be a no-op instead of
+        # erroring out the whole job.
+        run: |
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VER=$(node -p "require('./package.json').version")
+          if npm view "$PKG_NAME@$PKG_VER" version > /dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$PKG_NAME@$PKG_VER is already published on npm — skipping."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish (with provenance)
         # --ignore-scripts: build was already done in the `build` job;
         # the prepublishOnly hook would otherwise try to invoke pnpm,
         # which isn't installed in this job.
+        if: steps.npm-check.outputs.already != 'true'
         run: npm publish --provenance --access public --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -129,7 +148,23 @@ jobs:
             fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
           "
 
+      - name: Skip if version already on GHP
+        id: gpr-check
+        # Run AFTER the rewrite step so the lookup uses the GHP scope.
+        run: |
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VER=$(node -p "require('./package.json').version")
+          if npm view "$PKG_NAME@$PKG_VER" version > /dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$PKG_NAME@$PKG_VER is already published on GHP — skipping."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish to GitHub Packages
+        if: steps.gpr-check.outputs.already != 'true'
         run: npm publish --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -153,8 +188,10 @@ jobs:
 
       - uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          # Honor the workflow_dispatch input; fall back to the tag the
+          # tag-push trigger fired on (github.ref_name).
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: ${{ github.event.inputs.tag || github.ref_name }}
           generate_release_notes: true
           files: |
             release-assets/*.tgz

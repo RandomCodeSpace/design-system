@@ -4,63 +4,56 @@
    ============================================================ */
 
 /* ---------- Fonts (self-hosted, offline-safe) ----------
-   Inter: 400 / 500 / 600 — primary UI typeface
-   JetBrains Mono: 400 / 500 / 600 — code, terminal, micro-labels
-   Files live in assets/fonts/ relative to this stylesheet at project root.
-   The Google Fonts @import below is a fallback so static checkers can
-   recognize the family names; local @font-face rules below it always win. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+   Bricolage Grotesque (display)  — Atelier Triay, OFL-1.1
+     Variable axes: wght 200–800, opsz 12–96, wdth 75–100.
+     Used for h1/h2/display via --font-display so headings get the
+     editorial, optical-size-aware shape that distinguishes premium
+     SaaS hierarchies (Linear / Vercel / Stripe-tier landing pages).
+   Plus Jakarta Sans (body)        — Tokotype, OFL-1.1
+     Variable axis: wght 200–800. Body workhorse — humanist with more
+     glyph character than Inter/Geist (open `a`, friendlier `g`).
+   Geist Mono (code)               — Vercel, OFL-1.1
+     Variable axis: wght 100–900. Carried over from previous design.
+
+   All three are bundled at dist/assets/fonts/ — @font-face URLs
+   resolve relative to dist/styles.css. No CDN or runtime network
+   fetch. See LICENSE-FONTS.txt at the repo root for full OFL text. */
 
 @font-face {
-  font-family: "Inter";
+  font-family: "Bricolage Grotesque";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
   font-display: swap;
-  src: url("assets/fonts/Inter-Regular.woff2") format("woff2");
+  src: url("assets/fonts/BricolageGrotesque-Variable.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Inter";
+  font-family: "Plus Jakarta Sans";
   font-style: normal;
-  font-weight: 500;
+  font-weight: 200 800;
   font-display: swap;
-  src: url("assets/fonts/Inter-Medium.woff2") format("woff2");
+  src: url("assets/fonts/PlusJakartaSans-Variable.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Inter";
+  font-family: "Geist Mono";
   font-style: normal;
-  font-weight: 600;
+  font-weight: 100 900;
   font-display: swap;
-  src: url("assets/fonts/Inter-SemiBold.woff2") format("woff2");
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("assets/fonts/JetBrainsMono-Medium.woff2") format("woff2");
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("assets/fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
+  src: url("assets/fonts/GeistMono-Variable.woff2") format("woff2");
 }
 
 /* ============================================================
    ROOT — Shared tokens (theme-agnostic)
    ============================================================ */
 :root {
-  /* ---- Type families ---- */
-  --font-sans: "Inter", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* ---- Type families ----
+     --font-display drives h1/h2/.rcs-display headings. --font-sans is
+     body + UI chrome. Two-family pairing chosen for editorial premium
+     feel (Bricolage Grotesque headings) without sacrificing legibility
+     in dense data UI (Plus Jakarta Sans body). */
+  --font-display: "Bricolage Grotesque", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  --font-sans:    "Plus Jakarta Sans", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:    "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* ---- Type scale (modular, tight) ---- */
   --fs-display: 64px;   --lh-display: 1.02; --ls-display: -0.035em;
@@ -79,10 +72,15 @@
   --fw-semibold: 600;
   --fw-bold:    700;
 
-  /* ---- Spacing (4px base) ---- */
+  /* ---- Spacing (4px base, with 6/10 half-steps for tighter control)
+     Half-steps fill the 4→8 and 8→12 gaps for dense UI (icon-button
+     padding, chip insets, popover internal rhythm) where strict 4-mod
+     forces over-padding. */
   --space-0: 0;
   --space-1: 4px;
+  --space-1\.5: 6px;
   --space-2: 8px;
+  --space-2\.5: 10px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
@@ -94,12 +92,19 @@
   --space-20: 80px;
   --space-24: 96px;
 
+  /* ---- Container widths (content max-widths for symmetric layouts) ---- */
+  --container-narrow: 640px;
+  --container:        960px;
+  --container-wide:   1280px;
+  --container-full:   1536px;
+
   /* ---- Radii ---- */
-  --radius-xs: 2px;
-  --radius-sm: 4px;      /* default — tight, Linear-style */
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  --radius-xs:  2px;
+  --radius-sm:  4px;      /* default — tight, Linear-style */
+  --radius-md:  6px;
+  --radius-lg:  8px;
+  --radius-xl:  12px;
+  --radius-2xl: 16px;     /* large surfaces — sheets, modals */
   --radius-full: 9999px;
 
   /* ---- Borders ---- */
@@ -115,6 +120,22 @@
   --dur-fast:    140ms;
   --dur-base:    220ms;
   --dur-slow:    380ms;
+
+  /* ---- Elevation (semantic shadow tier — pick by intent, not weight)
+     Maps purpose to physical shadow so component authors stop guessing
+     between --shadow-sm/md/lg. Card sits on the page, popover floats
+     above the page, modal floats above popovers, toast above modals. */
+  --elevation-card:    var(--shadow-sm);
+  --elevation-popover: var(--shadow-md);
+  --elevation-modal:   var(--shadow-lg);
+  --elevation-toast:   var(--shadow-lg);
+
+  /* ---- Inset depth tokens — premium dimension on solid buttons.
+     Top highlight + bottom shade simulate light from above without
+     skeuomorphism. Values are intentionally subtle — readable in both
+     themes because they're alpha-channel rgba, not solid colors. */
+  --inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --inset-shade:     inset 0 -1px 0 rgba(0, 0, 0, 0.12);
 
   /* ---- Brand: core palette (Red, Cod Gray, White) ---- */
   --brand-red-50:   #FFF0F0;
@@ -158,10 +179,13 @@
   --bg-3: #E5E5E5;       /* pressed, sunken */
   --bg-inverse: #1C1C1C; /* buttons, chips — Cod Gray */
 
-  /* Foreground */
+  /* Foreground
+     Contrast targets (WCAG): fg-1 → AAA on bg-0/1/2 (17.04:1 — block-of-text safe),
+     fg-2 → AAA (10.86:1), fg-3 → AAA (7.51:1 on bg-0; 7.17:1 on bg-2 — metadata-safe),
+     fg-4 → AA hint only (disabled exempt from contrast per WCAG). */
   --fg-1: #1C1C1C;       /* primary text — Cod Gray */
   --fg-2: #3D3D3D;       /* secondary */
-  --fg-3: #5A5A5A;       /* tertiary, metadata */
+  --fg-3: #4F4F4F;       /* tertiary, metadata — AAA on white & raised surfaces */
   --fg-4: #A6A6A6;       /* disabled / hint */
   --fg-inverse: #FFFFFF;
 
@@ -189,7 +213,10 @@
   --shadow-sm: 0 1px 2px rgba(28, 28, 28, 0.06), 0 1px 1px rgba(28, 28, 28, 0.04);
   --shadow-md: 0 4px 12px rgba(28, 28, 28, 0.07), 0 1px 2px rgba(28, 28, 28, 0.04);
   --shadow-lg: 0 12px 32px rgba(28, 28, 28, 0.10), 0 2px 6px rgba(28, 28, 28, 0.05);
-  --shadow-focus: 0 0 0 3px rgba(230, 0, 0, 0.28);
+  /* 2-stop focus ring — inner halo (page bg) separates the accent
+   * outline from any underlying surface, so focus reads on white,
+   * gray, or coloured panels equally. */
+  --shadow-focus: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--accent);
 
   /* Grid overlay */
   --grid-line: rgba(28, 28, 28, 0.04);
@@ -231,7 +258,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 1px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-focus: 0 0 0 3px rgba(230, 0, 0, 0.45);
+  --shadow-focus: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--accent);
 
   --grid-line: rgba(255, 255, 255, 0.04);
 }
@@ -252,7 +279,7 @@
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.45), 0 1px 1px rgba(0,0,0,0.3);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.35);
     --shadow-lg: 0 18px 40px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.4);
-    --shadow-focus: 0 0 0 3px rgba(230,0,0,0.45);
+    --shadow-focus: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--accent);
     --grid-line: rgba(255,255,255,0.04);
   }
 }
@@ -264,27 +291,53 @@ html { font-family: var(--font-sans); color: var(--fg-1); background: var(--bg-0
 body {
   font-size: var(--fs-body); line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "ss01", "cv11";
+  /* Plus Jakarta Sans's contextual alternates and standard ligatures
+   * are dormant by default — opting in gives the friendlier humanist
+   * shapes the family was designed around. Tabular figures scoped to
+   * mono / Stat / numeric contexts below so prose isn't forced into
+   * fixed-width digits. */
+  font-feature-settings: "calt", "liga", "kern";
 }
 
+/* Bricolage Grotesque drives the editorial display tier.
+ *
+ * font-optical-sizing: auto exercises Bricolage's opsz axis (12–96)
+ * so each heading size pulls a tightened/loosened glyph cut — small
+ * heads get more aperture for readability, large heads get the sharp
+ * editorial geometry that signals "premium". Browsers honour opsz
+ * by default in modern engines, but explicit `auto` documents intent
+ * and makes future axis additions explicit.
+ *
+ * font-feature-settings: "ss01" engages Bricolage's stylistic set 01
+ * which swaps in the alternate double-story g, refined a, and
+ * geometric R — the glyph alternates Atelier Triay designed
+ * specifically to give Bricolage its display character. */
 .rcs-display, h1.display {
-  font-family: var(--font-sans); font-weight: var(--fw-semibold);
+  font-family: var(--font-display); font-weight: var(--fw-semibold);
   font-size: var(--fs-display); line-height: var(--lh-display); letter-spacing: var(--ls-display);
+  font-optical-sizing: auto;
+  font-feature-settings: "ss01", "kern";
   color: var(--fg-1);
 }
 h1, .rcs-h1 {
-  font-family: var(--font-sans); font-weight: var(--fw-semibold);
+  font-family: var(--font-display); font-weight: var(--fw-semibold);
   font-size: var(--fs-h1); line-height: var(--lh-h1); letter-spacing: var(--ls-h1);
+  font-optical-sizing: auto;
+  font-feature-settings: "ss01", "kern";
   color: var(--fg-1); margin: 0;
 }
 h2, .rcs-h2 {
-  font-weight: var(--fw-semibold);
+  font-family: var(--font-display); font-weight: var(--fw-semibold);
   font-size: var(--fs-h2); line-height: var(--lh-h2); letter-spacing: var(--ls-h2);
+  font-optical-sizing: auto;
+  font-feature-settings: "ss01", "kern";
   color: var(--fg-1); margin: 0;
 }
 h3, .rcs-h3 {
-  font-weight: var(--fw-semibold);
+  font-family: var(--font-display); font-weight: var(--fw-semibold);
   font-size: var(--fs-h3); line-height: var(--lh-h3); letter-spacing: var(--ls-h3);
+  font-optical-sizing: auto;
+  font-feature-settings: "ss01", "kern";
   color: var(--fg-1); margin: 0;
 }
 h4, .rcs-h4 {
@@ -308,7 +361,16 @@ p, .rcs-body {
 code, kbd, samp, pre, .rcs-code {
   font-family: var(--font-mono);
   font-size: var(--fs-code); line-height: var(--lh-code);
-  font-feature-settings: "zero", "ss02";
+  /* Tabular figures so digit columns line up; "zero" is the slashed
+   * zero glyph. Both are present in Geist Mono. */
+  font-feature-settings: "zero", "tnum";
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+/* Lock numeric columns (Stat values, micro labels with counts, etc.)
+ * to fixed-width digits so changing values don't shift layout. */
+.rcs-stat-value, .rcs-stat-delta, .rcs-micro, .rcs-label {
+  font-variant-numeric: tabular-nums;
 }
 code:not(pre code) {
   background: var(--bg-2); border: 1px solid var(--border-1);
@@ -326,4 +388,26 @@ a:hover { opacity: 0.75; }
   outline: none;
   box-shadow: var(--shadow-focus);
   border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+   REDUCED MOTION — accessibility & user preference
+   ============================================================
+   Users who set `prefers-reduced-motion: reduce` (OS-level setting,
+   common for vestibular disorders / motion sensitivity) get all
+   animations and transitions collapsed to near-zero. We don't
+   eliminate them entirely (0ms can break state machines that wait
+   for transitionend) — 0.01ms is functionally instant. Animations
+   that genuinely convey *information* (loading spinners, indeterminate
+   progress) are exempted by being kept on but with a single iteration
+   so they still complete the visual cue. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

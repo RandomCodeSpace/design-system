@@ -1,6 +1,6 @@
 {
   "name": "@ossrandom/design-system",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "RandomCodeSpace Design System — strongly-typed React component definitions.",
   "keywords": [
     "design-system",
@@ -48,7 +48,7 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').writeFileSync('dist/styles.css', require('fs').readFileSync('colors_and_type.css','utf8') + '\\n' + require('fs').readFileSync('src/styles.css','utf8'))\"",
+    "build": "tsc -p tsconfig.build.json && node scripts/build-assets.mjs",
     "build:site": "node scripts/build-site.mjs _site",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",
@@ -71,16 +71,16 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.0.0",
-    "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitest/coverage-v8": "^4.1.5",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.28.0",
     "eslint": "^9.0.0",
     "jsdom": "^29.0.2",
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "typescript": "^5.6.0",
     "vite": "^8.0.10",
     "vitest": "^4.1.5"

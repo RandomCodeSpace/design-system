@@ -25,6 +25,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
     style,
     id,
     "data-testid": dataTestid,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledBy,
+    "aria-describedby": ariaDescribedBy,
   } = props;
 
   const cls = cx(
@@ -47,6 +50,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
       disabled={disabled || loading}
       aria-disabled={disabled || loading || undefined}
       aria-busy={loading || undefined}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
+      aria-describedby={ariaDescribedBy}
       onClick={onClick}
     >
       {loading ? <span className="rcs-button-spinner" aria-hidden /> : iconLeft}

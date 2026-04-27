@@ -34,6 +34,12 @@
   opacity: 0.5; cursor: not-allowed;
 }
 .rcs-button:active:not(:disabled) { transform: translateY(0.5px); }
+/* Preserve inset depth on focus — global :focus-visible would otherwise
+ * replace the entire box-shadow stack and flatten the solid variants. */
+.rcs-button--primary:focus-visible,
+.rcs-button--danger:focus-visible {
+  box-shadow: var(--inset-highlight), var(--inset-shade), var(--shadow-focus);
+}
 
 /* sizes */
 .rcs-button--xs { height: 24px; padding: 0 8px;  font-size: 12px; border-radius: var(--radius-sm); }
@@ -48,9 +54,13 @@
 .rcs-button--block  { width: 100%; }
 
 /* variants */
+/* Solid buttons (--primary, --danger) get inset highlight + bottom
+ * shade — fakes a top-light source for subtle dimension without
+ * skeuomorphism. Hairline outer shadow grounds the chip on the page. */
 .rcs-button--primary {
   background: var(--bg-inverse); color: var(--fg-inverse);
   border-color: var(--bg-inverse);
+  box-shadow: var(--inset-highlight), var(--inset-shade), 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 .rcs-button--primary:hover:not(:disabled) { background: var(--brand-gray-700); border-color: var(--brand-gray-700); }
 .rcs-button--secondary {
@@ -63,6 +73,7 @@
 .rcs-button--ghost:hover:not(:disabled) { background: var(--bg-2); }
 .rcs-button--danger {
   background: var(--accent); color: var(--accent-fg); border-color: var(--accent);
+  box-shadow: var(--inset-highlight), var(--inset-shade), 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 .rcs-button--danger:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 .rcs-button--link {
@@ -96,11 +107,16 @@
 /* ============================================================
    INPUTS
    ============================================================ */
+/* Block-level flex by default — Inputs are full-width in form layouts
+ * 99% of the time, and `display: flex` removes the inline-flex gotcha
+ * (where consumers had to wrap in a block parent or set width:100% on
+ * every callsite). For genuine inline use, consumers can override with
+ * className="!inline-flex !w-auto" or wrap in an inline container. */
 .rcs-input-wrap {
-  display: inline-flex; align-items: center;
+  display: flex; align-items: center;
   background: var(--bg-1); border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
-  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+  transition: border-color var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart);
   width: 100%;
 }
 .rcs-input-wrap:focus-within { border-color: var(--accent); box-shadow: var(--shadow-focus); }
@@ -120,6 +136,31 @@
   color: var(--fg-1); font-family: inherit; font-size: inherit;
 }
 .rcs-input::placeholder { color: var(--fg-4); }
+
+/* The wrap (.rcs-input-wrap:focus-within) shows the focus ring; the
+ * inner <input> must not paint its own — global :focus-visible would
+ * otherwise stack a second ring inside the wrap, the "two outlines"
+ * regression. Same for the textarea wrap. */
+.rcs-input-wrap > .rcs-input:focus,
+.rcs-input-wrap > .rcs-input:focus-visible {
+  box-shadow: none;
+  border-radius: inherit;
+}
+
+/* iOS Safari auto-zooms when a focused input has font-size < 16px.
+ * Mobile inputs render at 16px to suppress the page-zoom-on-focus
+ * jolt — desktop sizes (12/13/14/15px) are unaffected. Both
+ * .rcs-input-wrap (block-level container) and .rcs-textarea need
+ * the bump, since both inherit font-size into the focusable element. */
+@media (max-width: 768px), (pointer: coarse) {
+  .rcs-input-wrap--xs,
+  .rcs-input-wrap--sm,
+  .rcs-input-wrap--md,
+  .rcs-input-wrap--lg,
+  .rcs-textarea {
+    font-size: 16px;
+  }
+}
 .rcs-input-affix { display: inline-flex; align-items: center; color: var(--fg-3); }
 .rcs-input-affix--left  { margin-right: var(--space-2); }
 .rcs-input-affix--right { margin-left:  var(--space-2); }
@@ -138,7 +179,7 @@
   font-family: inherit; font-size: 14px; line-height: 1.55;
   padding: var(--space-2) var(--space-3);
   outline: 0;
-  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+  transition: border-color var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart);
   resize: vertical;
 }
 .rcs-textarea:focus { border-color: var(--accent); box-shadow: var(--shadow-focus); }
@@ -185,7 +226,7 @@
   width: 16px; height: 16px; flex-shrink: 0;
   border: 1.5px solid var(--border-3); background: var(--bg-1);
   cursor: pointer; margin: 1px 0 0; display: inline-grid; place-items: center;
-  transition: background var(--dur-fast), border-color var(--dur-fast);
+  transition: background var(--dur-fast) var(--ease-out-quart), border-color var(--dur-fast) var(--ease-out-quart);
 }
 .rcs-checkbox input { border-radius: 3px; }
 .rcs-radio input    { border-radius: 50%; }
@@ -223,7 +264,7 @@
   position: relative;
   width: 32px; height: 18px;
   background: var(--bg-3); border-radius: var(--radius-full);
-  transition: background var(--dur-fast);
+  transition: background var(--dur-fast) var(--ease-out-quart);
 }
 .rcs-switch-thumb {
   position: absolute; top: 2px; left: 2px;
@@ -267,7 +308,7 @@
   width: 100%; min-width: 120px;
   background: var(--bg-1); border: 1px solid var(--border-2); border-radius: var(--radius-sm);
   color: var(--fg-1); cursor: pointer; outline: 0;
-  transition: border-color var(--dur-fast);
+  transition: border-color var(--dur-fast) var(--ease-out-quart);
 }
 .rcs-select-trigger:focus { border-color: var(--accent); box-shadow: var(--shadow-focus); }
 .rcs-select-trigger[data-status="error"] { border-color: var(--danger); }
@@ -278,13 +319,13 @@
 .rcs-select-trigger--lg { height: 40px; padding: 0 14px; font-size: 15px; }
 .rcs-select-value { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rcs-select-placeholder { color: var(--fg-4); }
-.rcs-select-caret { color: var(--fg-3); flex-shrink: 0; transition: transform var(--dur-fast); }
+.rcs-select-caret { color: var(--fg-3); flex-shrink: 0; transition: transform var(--dur-fast) var(--ease-out-quart); }
 .rcs-select[data-open="true"] .rcs-select-caret { transform: rotate(180deg); }
 
 .rcs-select-menu {
   position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
   background: var(--bg-1); border: 1px solid var(--border-2); border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg); padding: 4px; max-height: 240px; overflow: auto;
+  box-shadow: var(--elevation-popover); padding: 4px; max-height: 240px; overflow: auto;
 }
 .rcs-select-search {
   width: 100%; padding: 6px 8px;
@@ -318,7 +359,7 @@
   padding: var(--space-8); border: 1.5px dashed var(--border-2);
   border-radius: var(--radius-md); background: var(--bg-1);
   text-align: center; cursor: pointer;
-  transition: border-color var(--dur-fast), background var(--dur-fast);
+  transition: border-color var(--dur-fast) var(--ease-out-quart), background var(--dur-fast) var(--ease-out-quart);
 }
 .rcs-upload-drop:hover, .rcs-upload-drop[data-drag="true"] {
   border-color: var(--accent); background: var(--accent-soft);
@@ -375,10 +416,20 @@
 .rcs-card {
   background: var(--bg-1); border: 1px solid var(--border-1);
   border-radius: var(--radius-md);
+  box-shadow: var(--elevation-card);
+  /* Hoist transition to base so hover-IN animates, not just hover-OUT
+   * (declaring transition only inside :hover means the leave state
+   * has no defined transition source — fixes a subtle motion bug). */
+  transition:
+    border-color var(--dur-base) var(--ease-out-quart),
+    box-shadow   var(--dur-base) var(--ease-out-quart),
+    transform    var(--dur-base) var(--ease-out-quart);
 }
 .rcs-card[data-hoverable="true"]:hover {
-  border-color: var(--border-2); box-shadow: var(--shadow-md); transform: translateY(-1px);
-  transition: all var(--dur-base) var(--ease-out-quart);
+  border-color: var(--border-2); box-shadow: var(--elevation-popover); transform: translateY(-1px);
+}
+.rcs-card[data-hoverable="true"]:active {
+  transform: translateY(0); box-shadow: var(--elevation-card);
 }
 .rcs-card-header {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -427,15 +478,19 @@
    TABS · MENU · BREADCRUMB · PAGINATION · STEPS
    ============================================================ */
 .rcs-tabs { display: flex; flex-direction: column; }
-.rcs-tabs-nav { display: flex; align-items: center; gap: 0; }
+/* shrink-0 so the nav row keeps its intrinsic height when the parent
+ * is a constrained flex-column (e.g. dashboard panels). Without this,
+ * a tall .rcs-tabs-content can squash the tab strip. */
+.rcs-tabs-nav { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
 .rcs-tabs-tab {
   display: inline-flex; align-items: center; gap: var(--space-2);
   padding: 10px 14px; cursor: pointer;
   font-size: 14px; font-weight: var(--fw-medium); color: var(--fg-3);
-  background: transparent; border: 0; transition: color var(--dur-fast);
+  background: transparent; border: 0; transition: color var(--dur-fast) var(--ease-out-quart);
 }
 .rcs-tabs-tab:hover { color: var(--fg-1); }
 .rcs-tabs-tab[data-active="true"] { color: var(--fg-1); }
+.rcs-tabs-tab:active:not([disabled]):not([data-active="true"]) { transform: translateY(0.5px); }
 .rcs-tabs-tab[disabled] { opacity: 0.4; cursor: not-allowed; }
 .rcs-tabs--line .rcs-tabs-nav { border-bottom: 1px solid var(--border-1); }
 .rcs-tabs--line .rcs-tabs-tab[data-active="true"] { box-shadow: inset 0 -2px 0 0 var(--fg-1); }
@@ -448,7 +503,56 @@
 .rcs-tabs--segment .rcs-tabs-tab[data-active="true"] { background: var(--bg-1); box-shadow: var(--shadow-xs); }
 .rcs-tabs--pill .rcs-tabs-tab { padding: 6px 14px; border-radius: var(--radius-full); }
 .rcs-tabs--pill .rcs-tabs-tab[data-active="true"] { background: var(--bg-inverse); color: var(--fg-inverse); }
-.rcs-tabs-content { padding: var(--space-4) 0; }
+
+/* Scrollable nav — when tabs don't fit (mobile / narrow panels), the
+ * nav row scrolls horizontally with the scrollbar hidden, and a
+ * right-edge gradient fade hints at the off-screen tabs. The fade
+ * matches --rcs-tabs-fade-color (default: --bg-0 / page background);
+ * consumers on a non-page surface can override it: `--rcs-tabs-fade-color:
+ * var(--bg-1)` on the Tabs root or any ancestor.
+ *
+ * Tabs themselves get flex-shrink:0 so they keep their intrinsic width
+ * during the scroll instead of being squeezed flat. */
+.rcs-tabs[data-scrollable="true"] { position: relative; }
+.rcs-tabs-nav[data-scrollable="true"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rcs-tabs-nav[data-scrollable="true"]::-webkit-scrollbar { display: none; }
+.rcs-tabs-nav[data-scrollable="true"] .rcs-tabs-tab { flex-shrink: 0; }
+.rcs-tabs[data-scrollable="true"]::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 32px;
+  height: var(--rcs-tabs-nav-h, 40px);
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--rcs-tabs-fade-color, var(--bg-0))
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+/* Content area inherits the parent column flex so tab panels can fill
+ * the remaining height of dashboard-style layouts (where Tabs is one
+ * of several stacked rows and the active panel has its own scrollable
+ * region). min-height:0 + flex:1 is the canonical recipe — without it
+ * inner scroll containers blow past the parent and overlap siblings
+ * (e.g., a sticky bottom input bar).
+ *
+ * No default padding — consumers add their own (.rcs-card-body etc.)
+ * since "what should sit between the tab nav and the content" is a
+ * surface-level decision, not a primitive default. */
+.rcs-tabs-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
 
 .rcs-menu { display: flex; flex-direction: column; padding: 4px; min-width: 200px;
   background: var(--bg-1); border: 1px solid var(--border-1); border-radius: var(--radius-md);
@@ -547,30 +651,38 @@
 }
 .rcs-modal {
   background: var(--bg-1); color: var(--fg-1);
-  border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg); box-shadow: var(--elevation-modal);
   width: 100%; max-width: 520px; max-height: 90vh; display: flex; flex-direction: column;
   animation: rcs-pop-in var(--dur-base) var(--ease-out-quart);
 }
 .rcs-modal--xs { max-width: 360px; } .rcs-modal--sm { max-width: 440px; }
 .rcs-modal--md { max-width: 520px; } .rcs-modal--lg { max-width: 720px; }
 .rcs-modal--fullscreen { max-width: 100vw; max-height: 100vh; height: 100vh; border-radius: 0; }
-.rcs-modal-header { padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border-1); }
+/* Modal chrome (and the same Drawer chrome) explicitly shrink-0 so a
+ * tall body can't squeeze the header/footer. Body absorbs all spare
+ * height via flex:1 + min-height:0 + overflow:auto. */
+.rcs-modal-header { padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border-1); flex-shrink: 0; }
 .rcs-modal-title { font-size: 17px; font-weight: var(--fw-semibold); margin: 0; }
 .rcs-modal-desc { font-size: 13px; color: var(--fg-3); margin-top: 4px; }
-.rcs-modal-body { padding: var(--space-5); flex: 1; overflow: auto; }
-.rcs-modal-footer { padding: var(--space-3) var(--space-5); border-top: 1px solid var(--border-1); display: flex; justify-content: flex-end; gap: var(--space-2); }
+.rcs-modal-body { padding: var(--space-5); flex: 1; min-height: 0; overflow: auto; }
+.rcs-modal-footer { padding: var(--space-3) var(--space-5); border-top: 1px solid var(--border-1); display: flex; justify-content: flex-end; gap: var(--space-2); flex-shrink: 0; }
 @keyframes rcs-fade-in { from { opacity: 0; } }
 @keyframes rcs-pop-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } }
 
 .rcs-drawer {
   position: fixed; background: var(--bg-1); color: var(--fg-1);
   z-index: 101; display: flex; flex-direction: column;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--elevation-modal);
 }
-.rcs-drawer--right { top: 0; right: 0; height: 100vh; }
-.rcs-drawer--left  { top: 0; left:  0; height: 100vh; }
-.rcs-drawer--top   { top: 0; left: 0; width: 100vw; }
-.rcs-drawer--bottom{ bottom: 0; left: 0; width: 100vw; }
+/* 100dvh > 100vh on mobile Safari — dvh subtracts the URL bar so the
+ * drawer doesn't bleed past the visible viewport. Falls back to 100vh
+ * if the browser doesn't understand dvh (the cascade resolves the
+ * second declaration only when supported). Same for 100dvw on
+ * top/bottom drawers. */
+.rcs-drawer--right { top: 0; right: 0; height: 100vh; height: 100dvh; }
+.rcs-drawer--left  { top: 0; left:  0; height: 100vh; height: 100dvh; }
+.rcs-drawer--top   { top: 0; left: 0; width: 100vw; width: 100dvw; }
+.rcs-drawer--bottom{ bottom: 0; left: 0; width: 100vw; width: 100dvw; }
 
 .rcs-progress { display: block; }
 .rcs-progress-track { width: 100%; height: 6px; background: var(--bg-3); border-radius: var(--radius-full); overflow: hidden; }
@@ -625,7 +737,7 @@
   position: absolute; z-index: 50;
   background: var(--bg-inverse); color: var(--fg-inverse);
   padding: 4px 8px; border-radius: var(--radius-sm); font-size: 12px;
-  white-space: nowrap; box-shadow: var(--shadow-md);
+  white-space: nowrap; box-shadow: var(--elevation-popover);
   pointer-events: none;
 }
 .rcs-tooltip-bubble[data-placement="top"]    { bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); }
@@ -646,7 +758,7 @@
   min-width: 260px; max-width: 380px;
   background: var(--bg-1); color: var(--fg-1);
   border: 1px solid var(--border-1); border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--elevation-toast);
   padding: var(--space-3) var(--space-4);
   display: flex; gap: var(--space-3); align-items: flex-start;
   animation: rcs-toast-in var(--dur-base) var(--ease-out-quart);
@@ -888,11 +1000,62 @@
 /* ============================================================
    PAGE HEADER · APP SHELL
    ============================================================ */
+/* PageHeader size scale.
+ *
+ *   sm — dense panel header (e.g. embedded detail pane). 17px title.
+ *   md — page-tier header (default).                     22px title.
+ *   lg — section landing.                                32px title.
+ *   xl — hero / marketing.                               44px title.
+ *
+ * Vertical padding is exposed as --rcs-page-header-py so the tab strip
+ * (.rcs-page-header-tabs) can derive its negative margin from it —
+ * keeping the tabs' underline flush with the header's border at every
+ * size, no per-size override needed. Title and subtitle scale together.
+ *
+ * Horizontal padding scales separately (matches each size's visual
+ * weight: tighter at sm, more generous at xl). */
 .rcs-page-header {
-  border-bottom: 1px solid var(--border-1); padding: var(--space-5) var(--space-6); background: var(--bg-1);
+  --rcs-page-header-py: var(--space-5);
+  --rcs-page-header-px: var(--space-6);
+  --rcs-page-header-title-fs: var(--fs-h3);
+  --rcs-page-header-subtitle-fs: 14px;
+  border-bottom: 1px solid var(--border-1);
+  padding: var(--rcs-page-header-py) var(--rcs-page-header-px);
+  background: var(--bg-1);
 }
+.rcs-page-header--xs {
+  --rcs-page-header-py: var(--space-1\.5);
+  --rcs-page-header-px: var(--space-3);
+  --rcs-page-header-title-fs: 15px;
+  --rcs-page-header-subtitle-fs: 12px;
+}
+.rcs-page-header--sm {
+  --rcs-page-header-py: var(--space-2);
+  --rcs-page-header-px: var(--space-4);
+  --rcs-page-header-title-fs: var(--fs-h4);
+  --rcs-page-header-subtitle-fs: 13px;
+}
+.rcs-page-header--md {
+  /* defaults already declared on .rcs-page-header */
+}
+.rcs-page-header--lg {
+  --rcs-page-header-py: var(--space-6);
+  --rcs-page-header-px: var(--space-8);
+  --rcs-page-header-title-fs: var(--fs-h2);
+  --rcs-page-header-subtitle-fs: 15px;
+}
+.rcs-page-header--xl {
+  --rcs-page-header-py: var(--space-8);
+  --rcs-page-header-px: var(--space-12);
+  --rcs-page-header-title-fs: var(--fs-h1);
+  --rcs-page-header-subtitle-fs: 17px;
+}
+/* align-items: center vertically centers actions against the title
+ * block — matches Linear/Vercel/GitHub header alignment. Works for
+ * both single-line (inlineSubtitle) and stacked title+subtitle layouts;
+ * actions stay visually balanced regardless of title-block height. */
 .rcs-page-header-row {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
 }
 .rcs-page-header-back {
   display: inline-flex; align-items: center; gap: 4px;
@@ -901,11 +1064,85 @@
   font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em;
 }
 .rcs-page-header-back:hover { color: var(--fg-1); }
-.rcs-page-header-title { display: flex; align-items: center; gap: var(--space-3); }
-.rcs-page-header-title h1 { font-size: 22px; margin: 0; }
-.rcs-page-header-subtitle { font-size: 14px; color: var(--fg-3); margin-top: 4px; }
+
+/* Inline back affordance — icon-only chevron sitting inside the title
+ * row before the avatar/title. Compact, ghost-button styling that
+ * matches the design-system Button ghost variant (transparent → bg-2
+ * on hover). Square 28px target so it pairs with sm header padding
+ * without dwarfing the title. */
+.rcs-page-header-back-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--fg-3);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background var(--dur-fast) var(--ease-out-quart),
+    color var(--dur-fast) var(--ease-out-quart);
+}
+.rcs-page-header-back-inline:hover { background: var(--bg-2); color: var(--fg-1); }
+.rcs-page-header-back-inline:active { transform: translateY(0.5px); }
+.rcs-page-header--sm .rcs-page-header-back-inline {
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+}
+.rcs-page-header--xs .rcs-page-header-back-inline {
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+}
+.rcs-page-header--xs .rcs-page-header-title { gap: var(--space-2); }
+.rcs-page-header-title { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.rcs-page-header-title h1 {
+  font-size: var(--rcs-page-header-title-fs);
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-optical-sizing: auto;
+  font-feature-settings: "ss01", "kern";
+  margin: 0;
+}
+.rcs-page-header-subtitle {
+  font-size: var(--rcs-page-header-subtitle-fs);
+  color: var(--fg-3);
+  margin-top: 4px;
+}
+
+/* Inline subtitle (data-inline-subtitle="true") — collapses title and
+ * subtitle onto a single baseline-aligned row with a · separator. Used
+ * for app-bar / brand-mark headers where the subtitle is a tagline
+ * (e.g. "ctm · claude tmux manager") and the goal is to stay as
+ * compact as possible. The separator is a pseudo-element so consumers
+ * pass plain subtitle text without thinking about layout. */
+.rcs-page-header[data-inline-subtitle="true"] .rcs-page-header-title-text {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.rcs-page-header[data-inline-subtitle="true"] .rcs-page-header-subtitle {
+  margin-top: 0;
+}
+.rcs-page-header[data-inline-subtitle="true"] .rcs-page-header-subtitle::before {
+  content: "·";
+  margin-right: var(--space-2);
+  color: var(--fg-4);
+}
 .rcs-page-header-actions { display: flex; gap: var(--space-2); flex-shrink: 0; }
-.rcs-page-header-tabs { margin-top: var(--space-4); margin-bottom: -21px; }
+/* Hang the tab row off the page-header's bottom edge so the tabs'
+ * underline merges with the header's border-bottom. Derives from
+ * --rcs-page-header-py so it adapts to whatever size the parent uses. */
+.rcs-page-header-tabs {
+  margin-top: var(--space-4);
+  margin-bottom: calc(-1 * (var(--rcs-page-header-py) + var(--border-thin)));
+}
 
 .rcs-app-shell { display: grid; grid-template-rows: auto 1fr auto; min-height: 100vh; background: var(--bg-0); }
 .rcs-app-shell-body { display: grid; min-height: 0; }

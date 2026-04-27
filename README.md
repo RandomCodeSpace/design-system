@@ -2,7 +2,7 @@
 
 > RandomCodeSpace Design System — strongly-typed React component library.
 
-Signal Red on Cod Gray. Inter for UI, JetBrains Mono for code. Built for self-hosted developer tooling.
+Signal Red on Cod Gray. Bricolage Grotesque headlines (opsz + ss01), Plus Jakarta Sans body, Geist Mono code — all OFL-1.1, self-hosted variable woff2. Built for developer tooling.
 
 **📖 [Live docs · live previews · playground](https://randomcodespace.github.io/design-system/)** — auto-generated component reference at `randomcodespace.github.io/design-system`.
 
@@ -85,7 +85,7 @@ export function Dashboard({ services }: { services: readonly Service[] }) {
 src/
   index.tsx              public entry — re-exports everything (runtime + types)
   tokens.ts              design token unions
-  components.d.ts        prop interfaces (types-only)
+  components.ts          prop interfaces (types-only, hand-written)
   styles.css             component styles (concatenated into dist/styles.css)
   internal/cx.ts         className composer + uid helper
   components/

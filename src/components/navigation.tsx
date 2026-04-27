@@ -14,7 +14,7 @@ import { cx } from "../internal/cx";
 
 // ─── Tabs ─────────────────────────────────────────────────────────────
 export function Tabs<K extends string = string>(props: TabsProps<K>): React.ReactElement {
-  const { items, value, defaultValue, variant = "line", size = "md", onChange, className, style, id } = props;
+  const { items, value, defaultValue, variant = "line", size = "md", onChange, scrollable, className, style, id } = props;
   const isControlled = value !== undefined;
   const [internal, setInternal] = React.useState<K>((defaultValue ?? items[0]?.key) as K);
   const v = isControlled ? value : internal;
@@ -27,8 +27,13 @@ export function Tabs<K extends string = string>(props: TabsProps<K>): React.Reac
   };
 
   return (
-    <div id={id} className={cx("rcs-tabs", `rcs-tabs--${variant}`, `rcs-tabs--${size}`, className)} style={style}>
-      <div className="rcs-tabs-nav" role="tablist">
+    <div
+      id={id}
+      data-scrollable={scrollable || undefined}
+      className={cx("rcs-tabs", `rcs-tabs--${variant}`, `rcs-tabs--${size}`, className)}
+      style={style}
+    >
+      <div className="rcs-tabs-nav" data-scrollable={scrollable || undefined} role="tablist">
         {items.map((it: TabItem<K>) => (
           <button
             key={it.key}

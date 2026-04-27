@@ -16,7 +16,7 @@
  │  Types layer         │                    │  Runtime layer             │
  │                      │                    │                            │
  │  src/tokens.ts       │  ◀── (type-only) ──│  src/components/*.tsx      │
- │  src/components.d.ts │                    │  (13 files, ~2.5k LOC)     │
+ │  src/components.ts │                    │  (13 files, ~2.5k LOC)     │
  │                      │                    │                            │
  │  Strict, hand-       │                    │  Each component uses:      │
  │  written, single     │                    │   • React 18 (peer)        │
@@ -38,11 +38,11 @@
 
 ### Strict types-vs-runtime split
 
-- **Types are written by hand**, not generated. `src/components.d.ts` (648 lines) declares every `*Props` interface; `src/tokens.ts` (56 lines) declares the token unions. Both are imported with `import type { ... }`.
+- **Types are written by hand**, not generated. `src/components.ts` (~693 lines) declares every `*Props` interface; `src/tokens.ts` (56 lines) declares the token unions. Both are imported with `import type { ... }`. The file is `.ts` (not `.d.ts`) so it lints/typechecks alongside the rest of the source — but it must remain runtime-export-free (only `interface` and `type` declarations).
 - **Each runtime component** (`src/components/<category>.tsx`) imports only its own props from `../components` — for example `src/components/buttons.tsx:6-8` imports `ButtonProps, IconButtonProps, ButtonGroupProps`.
 - **`src/index.tsx` re-exports types and runtime separately**: `export type * from "./tokens"` and `export type * from "./components"` (`src/index.tsx:13-14`), then `export { Button, ... } from "./components/buttons"` etc. Consumers see one flat surface.
 
-### Why a single `components.d.ts` instead of co-located prop interfaces
+### Why a single `components.ts` instead of co-located prop interfaces
 
 This is intentional. The pattern lets:
 
@@ -60,7 +60,7 @@ Verified from `src/components/buttons.tsx`, `src/components/feedback.tsx`, `src/
 - **Plain function components for compound or layout primitives** (ButtonGroup, Card, Grid).
 - **Hook-style composition** for cross-cutting behavior — `useEsc(active, handler)` in `src/components/feedback.tsx:35-42` is the local pattern. Do not pull in a hooks library.
 - **className composition is always via `cx()`** from `src/internal/cx.ts` — string-concat falsy-pruning. `clsx`/`classnames` are intentionally absent.
-- **A11y attributes are first-class.** `aria-label` is a required prop on `IconButton` (`src/components.d.ts:54`); `Button` sets `aria-busy`/`aria-disabled` based on `loading`/`disabled` (`src/components/buttons.tsx:48-49`); `Modal` uses `role="dialog" aria-modal="true"` (`src/components/feedback.tsx:54`).
+- **A11y attributes are first-class.** `aria-label` is a required prop on `IconButton` (`src/components.ts:54`); `Button` sets `aria-busy`/`aria-disabled` based on `loading`/`disabled` (`src/components/buttons.tsx:48-49`); `Modal` uses `role="dialog" aria-modal="true"` (`src/components/feedback.tsx:54`).
 - **No CSS-in-JS, no `style={...}` for design.** All visuals come from `.rcs-*` classes in `src/styles.css`. Inline `style` is only used for consumer-overridable shape (e.g., grid template columns, dimensional props passed in).
 
 ## Theme system
@@ -79,7 +79,7 @@ Verified from `src/components/buttons.tsx`, `src/components/feedback.tsx`, `src/
 1. Mount `<ToastRegion />` once near the root inside `ThemeProvider`.
 2. Anywhere in the tree, call `toast.show({ title, ... })` — the call enqueues into an in-memory store; `ToastRegion` subscribes and renders.
 
-Treat `toast` as an imperative escape hatch from React's tree. Don't add per-call configuration that requires a Provider — the public API (`ToastApi` / `ToastOptions` in `src/components.d.ts:403-415`) is the contract.
+Treat `toast` as an imperative escape hatch from React's tree. Don't add per-call configuration that requires a Provider — the public API (`ToastApi` / `ToastOptions` in `src/components.ts:403-415`) is the contract.
 
 ## CSS architecture
 
@@ -87,7 +87,7 @@ Two stylesheets, concatenated at build time:
 
 | File | Role | Lines | Notes |
 |------|------|-------|-------|
-| `colors_and_type.css` (repo root) | Tokens — colors, type, spacing, radii, motion, fonts, themes | 330 | Has `:root`, `[data-theme="light"]`, `[data-theme="dark"]`, and `prefers-color-scheme: dark` fallback. Declares `@font-face` for self-hosted Inter + JetBrains Mono. |
+| `colors_and_type.css` (repo root) | Tokens — colors, type, spacing, radii, motion, fonts, themes | ~395 | Has `:root`, `[data-theme="light"]`, `[data-theme="dark"]`, and `prefers-color-scheme: dark` fallback. Declares `@font-face` for self-hosted Bricolage Grotesque + Plus Jakarta Sans + Geist Mono (variable woff2, OFL-1.1). No public-internet `@import`. |
 | `src/styles.css` | Component styles, sectioned by category | 916 | 251 `.rcs-*` class rules. Sections: BUTTONS, INPUTS, FORM, CHECKBOX·RADIO·SWITCH, SLIDER, SELECT·COMBOBOX, FILE UPLOAD, BADGES, CARDS·SPACE·LAYOUT, TABS·MENU·BREADCRUMB·PAGINATION·STEPS, FEEDBACK, TOAST, TABLE, STAT·AVATAR·TIMELINE, CHAT, CODE·MARKDOWN·TERMINAL·RTE, PAGE HEADER·APP SHELL. |
 
 The build script (`package.json:37`) concatenates them in that order into `dist/styles.css`. The token file comes first so component styles can reference `var(--*)`.

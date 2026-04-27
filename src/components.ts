@@ -22,11 +22,18 @@ import type {
 import type { ReactNode, CSSProperties, MouseEvent, ChangeEvent, KeyboardEvent, FocusEvent } from "react";
 
 // ─── Base ──────────────────────────────────────────────────────────────
+// Common props every component accepts. aria-* properties are listed
+// explicitly (not via `[key: string]: unknown` passthrough) so consumers
+// get type-checked accessibility — forgetting aria-label on an icon-only
+// button is a typed error, not a runtime gotcha.
 export interface BaseProps {
   readonly id?: string;
   readonly className?: string;
   readonly style?: CSSProperties;
   readonly "data-testid"?: string;
+  readonly "aria-label"?: string;
+  readonly "aria-labelledby"?: string;
+  readonly "aria-describedby"?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -329,6 +336,13 @@ export interface TabsProps<K extends string = string> extends BaseProps {
   readonly variant?: "line" | "card" | "segment" | "pill";
   readonly size?: Size;
   readonly onChange?: (key: K) => void;
+  /**
+   * When true, the tab nav row scrolls horizontally if the tabs don't
+   * fit (mobile / narrow panels) and renders a right-edge fade to hint
+   * at the off-screen tabs. Override the fade colour by setting
+   * `--rcs-tabs-fade-color` on the Tabs root or any ancestor.
+   */
+  readonly scrollable?: boolean;
 }
 
 export interface MenuItem<K extends string = string> {
@@ -620,6 +634,37 @@ export interface PageHeaderProps extends BaseProps {
   readonly badge?: ReactNode;
   readonly avatar?: ReactNode;
   readonly back?: { readonly label?: string; readonly onClick: () => void };
+  /**
+   * Visual size — scales padding, title, and subtitle in concert.
+   *
+   *   xs — slim app-bar (~34px). Detail screens with `back` affordance,
+   *        where the header is wayfinding chrome and content owns the
+   *        viewport. 15px title, 22px back chevron.
+   *   sm — dense panel header (--fs-h4 / 17px). Use inside cards or
+   *        secondary surfaces (e.g. an embedded detail pane).
+   *   md — page-tier header (--fs-h3 / 22px). Default.
+   *   lg — section landing (--fs-h2 / 32px).
+   *   xl — hero / marketing (--fs-h1 / 44px).
+   *
+   * Tab offset (the negative margin that hangs the tab strip off the
+   * header's bottom edge) follows automatically via --rcs-page-header-py.
+   */
+  readonly size?: "xs" | "sm" | "md" | "lg" | "xl";
+  /**
+   * Render the subtitle inline beside the title (separated by a · dot)
+   * instead of on a row below it. Use for compact app-bar / brand
+   * headers where the subtitle is a tagline rather than descriptive
+   * text — keeps the header height to a single line.
+   */
+  readonly inlineSubtitle?: boolean;
+  /**
+   * Render the back affordance as an icon-only chevron INSIDE the
+   * title row (before avatar/title) instead of as a text "← Back"
+   * link ABOVE the title row. Use for compact app headers where the
+   * back action belongs visually with the title — the Linear / GitHub
+   * / Notion pattern. No-op when `back` is not provided.
+   */
+  readonly backInline?: boolean;
 }
 
 export interface AppShellProps extends BaseProps {

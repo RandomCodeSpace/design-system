@@ -8,7 +8,7 @@ Verbatim from `SKILL.md` `§Non-negotiables` — these override any preference t
 
 - **Voice:** declarative, technical, no hype. Sentence case. **No emoji. No exclamation marks.**
 - **Color:** monochrome — black / white / cool grays. Accent is the inverse of the surface (`#0B0B0F` on light, `#F5F5F7` on dark per SKILL.md, but the live token in `colors_and_type.css:174` uses Signal Red `#E60000` as the `--accent` for both themes — see "Accent reconciliation" below). No chroma except functional semantic colors.
-- **Type:** Inter (UI) + JetBrains Mono (code/micro labels). Tight negative letterspacing on headings (`-0.035em` to `-0.008em`).
+- **Type:** Bricolage Grotesque (display headlines, opsz + ss01 + wdth axes), Plus Jakarta Sans (body / UI chrome), Geist Mono (code, micro labels). All three OFL-1.1, self-hosted variable woff2. Tight negative letterspacing on headings (`-0.035em` to `-0.008em`).
 - **Borders:** 1px hairlines, 4px radius default. No thick borders, no decorative shadows.
 - **Motion:** fast (140–220ms), `out-quart` (`cubic-bezier(0.25, 1, 0.5, 1)`) default. No bouncy nav, no stagger-for-the-sake-of-it. **Honor `prefers-reduced-motion`** when adding animations.
 - **Icons:** Lucide, 1.5px stroke, `currentColor`. Icon + label always unless unambiguous.
@@ -61,7 +61,7 @@ Declared on `:root` (`colors_and_type.css:60-74`). Modular, tight letterspacing.
 | micro | 11px | 1.4 | 0.04em | `.rcs-micro`, `.rcs-label` (mono + uppercase — the dev-tool signature) |
 | code | 13.5px | 1.55 | — | `code`, `kbd`, `samp`, `pre`, `.rcs-code` |
 
-Font families: `--font-sans: "Inter", ...` and `--font-mono: "JetBrains Mono", ...`. Fonts are self-hosted via `@font-face` from `assets/fonts/*.woff2` (Inter 400/500/600 + JetBrains Mono 400/500/600). **Caveat:** `colors_and_type.css:12` also has a Google Fonts `@import` as a "fallback for static checkers" — for true offline / air-gapped consumers, delete that line.
+Font families: `--font-display: "Bricolage Grotesque", ...`, `--font-sans: "Plus Jakarta Sans", ...`, `--font-mono: "Geist Mono", ...`. Fonts are self-hosted via `@font-face` from `assets/fonts/*.woff2` — three variable woff2 files (Bricolage carries wght 200–800, opsz 12–96, wdth 75–100; Plus Jakarta carries wght 200–800; Geist Mono carries wght 100–900). No CDN, no `@import` from Google Fonts — air-gapped-safe by default. h1/h2/h3 use `--font-display` with `font-optical-sizing: auto` and `font-feature-settings: "ss01", "kern"` for the editorial alt-glyph set.
 
 ### Spacing (4px base)
 
@@ -165,7 +165,7 @@ When changing token values, update the relevant preview card so the visual refer
 Verified patterns in component code:
 
 - **Focus ring:** site-wide `:focus-visible` (above) — never override to `outline: none` without a replacement.
-- **Required `aria-label`** on `IconButton` (compile-time required via `src/components.d.ts:54`).
+- **Required `aria-label`** on `IconButton` (compile-time required via `src/components.ts:54`).
 - **`role="dialog" aria-modal="true"`** on Modal (`src/components/feedback.tsx:54`).
 - **`aria-busy` / `aria-disabled`** on Button when `loading`/`disabled` (`src/components/buttons.tsx:48-49`).
 - **`role="alert"`** on Alert (`src/components/feedback.tsx:19`).

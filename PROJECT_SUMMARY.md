@@ -4,7 +4,7 @@
 
 ## Identity
 
-- **What it is:** A strongly-typed React component library — the **RandomCodeSpace (RCS) Design System**. Ships ~50 components, design tokens, and a single bundled stylesheet. Brand: Signal Red (`#E60000`) on Cod Gray (`#1C1C1C`); Inter for UI, JetBrains Mono for code.
+- **What it is:** A strongly-typed React component library — the **RandomCodeSpace (RCS) Design System**. Ships ~50 components, design tokens, and a single bundled stylesheet. Brand: Signal Red (`#E60000`) on Cod Gray (`#1C1C1C`); Bricolage Grotesque headlines (opsz + ss01), Plus Jakarta Sans body, Geist Mono code — all OFL-1.1, self-hosted variable woff2.
 - **Type:** **Hybrid** — (a) an npm component library published as `@ossrandom/design-system`, AND (b) a Claude Code user-invocable skill (`SKILL.md` at root, `name: randomcodespace-design`). The skill exposes the same tokens / kits to Claude for visual prototyping; the npm package ships the React runtime.
 - **Status:** **Pre-release / freshly bootstrapped.** Version `0.1.0` (never released — package.json:3, no git tags). Four commits in the entire history, all on 2026-04-26 (`git log` — three are `checkpoint: pre-yolo`, one `Initial Commit`). Branch `main` is **3 commits ahead of `origin/main`** and has not been pushed; only `b5f630a Initial Commit` exists upstream.
 - **Primary language(s):** TypeScript 5.6+ (`.tsx` runtime, `.d.ts` type-only), React 18+ peer. JSX (untyped) is used **only** in `ui_kits/` for static prototype kits — not part of the published package.
@@ -25,7 +25,7 @@
 |------------|------|---------|
 | Public ESM entry | `src/index.tsx` (34 lines) | Re-exports every runtime component + `export type * from "./tokens"` and `"./components"`. |
 | Token types | `src/tokens.ts` (56 lines) | Strongly-typed token unions: `BrandColor`, `Size`, `SpaceSize`, `Radius`, `ThemeMode`, `Direction`, `Axis`, `Align`, `Justify`, `TypeScale`, … |
-| Component prop types | `src/components.d.ts` (648 lines, **`.d.ts` not `.ts`**) | Single types-only file with `BaseProps` and every `*Props` interface. Hand-written; tsc copies it through. |
+| Component prop types | `src/components.ts` (~693 lines) | Single types-only file with `BaseProps` and every `*Props` interface. Hand-written `.ts` (no runtime exports — only `interface` / `type` declarations); tsc emits a generated `.d.ts` to dist. |
 | Internal utilities | `src/internal/cx.ts` (21 lines) | `cx(...parts)` className composer, `noop`, `uid(prefix?)` counter. Shipped to consumers — keep tiny. |
 | Component runtime | `src/components/*.tsx` (13 files, ~2.5k LOC total) | One file per component category. |
 | Runtime stylesheet (source) | `src/styles.css` (916 lines, 251 `.rcs-*` classes) | Component styles, sectioned by category. |
@@ -64,7 +64,7 @@ design-system/
 │   ├── marketing/                Hero, Nav, FeatureGrid, CLIShowcase, Pricing, Footer, index.html
 │   ├── app/                      AppShell-style: Sidebar, Topbar, ServicesGrid, LogTail, CommandMenu, index.html
 │   └── docs/                     DocsSidebar, Article, TOC, index.html
-├── assets/                       — brand SVG/PNG marks + self-hosted fonts (Inter, JetBrains Mono in 400/500/600)
+├── assets/                       — brand SVG/PNG marks + self-hosted fonts (Bricolage Grotesque, Plus Jakarta Sans, Geist Mono — variable woff2, OFL-1.1)
 ├── screenshots/                  — marketing-after.png, marketing-check.png (visual checks; not shipped)
 ├── .github/
 │   ├── workflows/ci.yml          typecheck → lint(continue) → test(continue) → build → upload dist
@@ -111,8 +111,8 @@ The build emits `dist/index.js`, `dist/index.d.ts`, declaration maps, source map
 
 Top rules — see `docs/project/conventions.md` for the full set with examples.
 
-- **One component category per file** under `src/components/`. To add a component: create or edit a category file, export the runtime, add the prop interface to `src/components.d.ts`, add a re-export line to `src/index.tsx`. Don't introduce per-component directories.
-- **`src/components.d.ts` is types-only and hand-written.** Components import their props as `import type { XProps } from "../components"` (`src/components/buttons.tsx:7`). Do not generate it, do not split it, do not create a `components.ts` runtime file alongside it.
+- **One component category per file** under `src/components/`. To add a component: create or edit a category file, export the runtime, add the prop interface to `src/components.ts`, add a re-export line to `src/index.tsx`. Don't introduce per-component directories.
+- **`src/components.ts` is types-only and hand-written.** Components import their props as `import type { XProps } from "../components"` (`src/components/buttons.tsx:7`). Do not generate it, do not split it. The file is `.ts` (not `.d.ts`) so it lints/typechecks with the rest of the source — but it must remain runtime-export-free (interfaces and `type` aliases only).
 - **Every prop interface extends `BaseProps`** (`{ id, className, style, "data-testid" }` — `src/components.d.ts:25-30`) and uses `readonly` on every field.
 - **Generic components** (`Select<V>`, `Combobox<V>`, `Tabs<K>`, `Menu<K>`, `RadioGroup<V>`, `Table<T>`) take their generic from a value/key/row type. Preserve generics when editing — don't widen to `any`.
 - **CSS class prefix is `.rcs-*`**, BEM-ish modifiers as `.rcs-foo--variant`. `cx()` from `src/internal/cx.ts` is the only className composer; do not pull in `clsx`/`classnames`.
@@ -123,11 +123,8 @@ Top rules — see `docs/project/conventions.md` for the full set with examples.
 
 Non-obvious things that bite. **Read these before making changes.**
 
-- **`colors_and_type.css:12` `@import` from Google Fonts.** This contradicts the README/SKILL.md "self-hosted, offline-safe" claim. The local `@font-face` rules below it always win in browsers, but the `@import` itself still triggers a public-internet request. For air-gapped consumers: delete or comment out line 12 (the comment in the file even labels it a fallback for static checkers).
-- **CI's `lint` and `test` steps are `continue-on-error: true`** (`.github/workflows/ci.yml:34-39`). Green CI does **not** mean lint or tests passed. The comment in the workflow says "remove once eslint config lands" / "remove once tests land" — these are tracked deferrals, not permanent.
-- **No tests exist.** `pnpm test` is a successful no-op today. Don't claim "tested" without writing one.
-- **No eslint config exists.** `pnpm lint` will fail at the local CLI until a config (`eslint.config.js` flat config) is added.
-- **`src/components.d.ts` is `.d.ts`, not `.ts`.** TypeScript resolves `import type { … } from "../components"` to it via module resolution. Renaming/splitting it requires updating every component file.
+- **CI's `lint` and `test` steps may still be `continue-on-error: true`** (`.github/workflows/ci.yml`). Verify the current state — green CI does not necessarily mean lint or tests passed if those flags are still set.
+- **`src/components.ts` is the public-API surface.** Renaming or splitting it requires updating every component file's `import type { … } from "../components"` line. It must remain runtime-export-free.
 - **Build CSS concatenation is an inline Node script in `package.json:37`.** It uses `require('fs')` even though the package is `"type": "module"` — works because `node -e` with `require` runs in CJS mode. Don't "fix" by switching to `import`; it'll break unless wrapped.
 - **`tsconfig.build.json` excludes `src/styles.css`** (`tsconfig.build.json:9`) — the CSS file is intentionally inside `src/` for proximity but is **not** emitted by tsc; only the concat script copies it. Do not move it under tsc's output.
 - **`ThemeProvider` writes to `document.documentElement`** (`src/components/theme.tsx:30,38,44`) — `data-theme` attribute and `--accent`/`--font-sans`/`--font-mono` inline styles. Multiple providers in one document fight each other; use one root provider.

@@ -17,6 +17,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Inp
     type = "text", autoFocus = false,
     onChange, onFocus, onBlur, onKeyDown,
     className, style, id, "data-testid": dataTestid,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledBy,
+    "aria-describedby": ariaDescribedBy,
   } = props;
 
   const isControlled = value !== undefined;
@@ -48,6 +51,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Inp
         readOnly={readOnly}
         autoFocus={autoFocus}
         aria-invalid={wrapStatus === "error" || undefined}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         onChange={(e) => {
           if (!isControlled) setInternal(e.target.value);
           onChange?.(e.target.value, e);
@@ -174,6 +180,9 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(fun
     disabled = false, readOnly = false, invalid = false,
     onChange, onFocus, onBlur, onKeyDown, autoFocus,
     className, style, id, "data-testid": dataTestid,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledBy,
+    "aria-describedby": ariaDescribedBy,
   } = props;
   const isControlled = value !== undefined;
   const [internal, setInternal] = React.useState<string>(defaultValue ?? "");
@@ -206,6 +215,9 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(fun
         readOnly={readOnly}
         autoFocus={autoFocus}
         aria-invalid={wrapStatus === "error" || undefined}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         data-status={wrapStatus}
         onChange={(e) => {
           if (!isControlled) setInternal(e.target.value);

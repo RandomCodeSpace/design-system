@@ -4,18 +4,18 @@
 
 ## Adding a new component
 
-The exact recipe (verified against `src/index.tsx`, `src/components.d.ts`, `src/components/buttons.tsx`):
+The exact recipe (verified against `src/index.tsx`, `src/components.ts`, `src/components/buttons.tsx`):
 
 1. **Pick a category file** under `src/components/` — `buttons.tsx`, `inputs.tsx`, `feedback.tsx`, etc. If your component genuinely doesn't fit any category, create a new file (`src/components/<category>.tsx`). One category per file.
-2. **Add the prop interface to `src/components.d.ts`**, in the matching section. Conventions for the interface:
-   - Extend `BaseProps` (`{ id, className, style, "data-testid" }` from `src/components.d.ts:25-30`).
+2. **Add the prop interface to `src/components.ts`**, in the matching section. Conventions for the interface:
+   - Extend `BaseProps` (`{ id, className, style, "data-testid" }` from `src/components.ts:25-30`).
    - Mark every field `readonly`.
    - Strict event signatures — `(e: MouseEvent<HTMLButtonElement>) => void`, never `(e: any) => void` and never bare `Function`.
    - `readonly` on array props — `readonly TableColumn<T>[]`, etc.
    - Discriminated unions for variants when shape differs by mode (e.g., `status: "error" | "warning" | ...`).
    - Token unions from `src/tokens.ts` (`Size`, `SpaceSize`, `Radius`, `Direction`, …) — don't redefine local string literals.
 3. **Implement in the category file:**
-   - Use `import type { XProps, YProps } from "../components"` (note: imports from `"../components"` resolve to `components.d.ts`).
+   - Use `import type { XProps, YProps } from "../components"` (note: imports from `"../components"` resolve to `components.ts`).
    - Use `import { cx } from "../internal/cx"` for className composition.
    - For ref-bearing native elements: `React.forwardRef<HTMLElement, XProps>(function X(props, ref) { ... })`.
    - For composite/layout components: plain `function X(props: XProps): React.ReactElement`.
@@ -27,7 +27,7 @@ Counter-examples — patterns to **avoid**:
 
 - Per-component subdirectory (`src/components/Button/index.tsx`) — flat files only.
 - Co-located `*.module.css` or styled-components — all styling lives in `src/styles.css`.
-- Importing types via `"./components.d"` or relative paths to the `.d.ts` extension — let module resolution find it.
+- Importing types via `"./components.ts"` or relative paths with the file extension — let module resolution find it via `from "../components"`.
 - Re-exporting a component from anywhere other than `src/index.tsx`.
 
 ## Type discipline
@@ -37,7 +37,7 @@ Counter-examples — patterns to **avoid**:
 - **`BaseProps` extension is mandatory.** `id`, `className`, `style`, and `data-testid` must remain consumer-controllable on every public component.
 - **Strict event types.** `MouseEvent<HTMLButtonElement>`, `ChangeEvent<HTMLInputElement>`, `KeyboardEvent`, `FocusEvent`. Don't fall back to `React.SyntheticEvent` unless genuinely polymorphic.
 - **Token unions from `src/tokens.ts`.** Do not introduce a local `type Size = "xs" | "sm" | ...` in a component file when one already exists in tokens.
-- **Discriminated unions** for variants whose semantics differ — e.g., `status: "error"` may require additional props that `status: "default"` doesn't. See `InputStatus` (`src/components.d.ts:68`).
+- **Discriminated unions** for variants whose semantics differ — e.g., `status: "error"` may require additional props that `status: "default"` doesn't. See `InputStatus` (`src/components.ts:68`).
 
 ## CSS conventions
 
@@ -54,8 +54,8 @@ These are easy mistakes that will get caught in review.
 
 - **Adding runtime dependencies.** React/ReactDOM are peer-only (`package.json:44-46`). Anything else is a discussion.
 - **Importing `clsx`/`classnames`/`tailwind-merge`.** Use `cx()` from `src/internal/cx.ts`.
-- **Re-introducing `colors_and_type.css:12`'s Google Fonts `@import` if it's been removed.** It's a public-internet call and contradicts the offline-safe stance.
-- **Splitting `src/components.d.ts` into per-component files.** See "Don't refactor" below.
+- **Re-introducing a Google Fonts `@import` in `colors_and_type.css`.** Removed in favor of self-hosted variable woff2 (Bricolage Grotesque + Plus Jakarta Sans + Geist Mono, OFL-1.1). Any public-internet font fetch contradicts the offline-safe stance.
+- **Splitting `src/components.ts` into per-component files.** See "Don't refactor" below.
 - **Renaming `.rcs-*` classes.** They're a public-ish API — consumers may target them in their own stylesheets.
 - **Adding chroma outside the existing palette.** Monochrome surfaces + Signal Red accent + functional semantic colors only.
 - **Using `style={{ color: "..." }}`, hex values inline, or arbitrary spacing.** Always tokens.
@@ -65,7 +65,7 @@ These are easy mistakes that will get caught in review.
 
 Patterns that look "wrong" but are deliberate. **Read the reasoning before "fixing".**
 
-- **`src/components.d.ts` (single 648-line file) is a `.d.ts`, not split into per-component types.** Reasons: (a) reviewers see the whole public-API surface in one file, (b) component authors write the type contract first then implement against it, (c) module resolution from `import type { XProps } from "../components"` only works because of this single file. Splitting it would require updating every component file's import line and breaks the intended workflow.
+- **`src/components.ts` (single ~693-line file) is the entire public-API surface, not split into per-component types.** Reasons: (a) reviewers see the whole public-API surface in one file, (b) component authors write the type contract first then implement against it, (c) module resolution from `import type { XProps } from "../components"` only works because of this single file. Splitting it would require updating every component file's import line and breaks the intended workflow. The file is `.ts` (was `.d.ts` pre-0.2.0) so it lints/typechecks alongside the rest of the source — keep it runtime-export-free (interfaces + `type` aliases only).
 - **`.rcs-*` class prefix.** Verbose, but namespacing is intentional — collisions with consumer CSS are a known cost of un-namespaced libraries.
 - **No CSS-in-JS / no Tailwind.** Single bundled stylesheet is the design — avoids runtime style-injection, plays well with SSR, ships one CSS file. Don't migrate.
 - **Build CSS concatenation is an inline Node script in `package.json:37`** instead of a separate `scripts/build-css.mjs`. It's two `readFileSync`s; the indirection costs more than it saves. Don't extract.

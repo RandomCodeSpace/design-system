@@ -27,7 +27,7 @@ Explore the other available files:
 
 - **Voice:** declarative, technical, no hype. Sentence case. No emoji. No exclamation marks.
 - **Color:** pure monochrome — black / white / cool grays. Accent is the inverse of the surface (`#0B0B0F` on light, `#F5F5F7` on dark). No chroma except functional semantic colors.
-- **Type:** Inter + JetBrains Mono. Tight negative letterspacing on headings.
+- **Type:** Bricolage Grotesque (display, opsz + ss01), Plus Jakarta Sans (body), Geist Mono (code). All OFL-1.1, self-hosted variable woff2. Tight negative letterspacing on headings.
 - **Borders:** 1px hairlines, 4px radius. No thick borders, no decorative shadows.
 - **Motion:** fast (140–220ms), crisp, out-quart default. No bouncy nav, no stagger-for-the-sake-of-it.
 - **Icons:** Lucide, 1.5px stroke, `currentColor`. Icon + label always unless unambiguous.

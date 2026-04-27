@@ -6,7 +6,7 @@ import * as React from "react";
 import type { SelectProps, ComboboxProps, SelectOption } from "../components";
 import { cx } from "../internal/cx";
 
-function useOutside(ref: React.RefObject<HTMLElement>, onOut: () => void): void {
+function useOutside(ref: React.RefObject<HTMLElement | null>, onOut: () => void): void {
   React.useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onOut();

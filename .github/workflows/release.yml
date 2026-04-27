@@ -88,7 +88,10 @@ jobs:
           scope: "@ossrandom"
 
       - name: Publish (with provenance)
-        run: npm publish --provenance --access public
+        # --ignore-scripts: build was already done in the `build` job;
+        # the prepublishOnly hook would otherwise try to invoke pnpm,
+        # which isn't installed in this job.
+        run: npm publish --provenance --access public --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -120,7 +123,8 @@ jobs:
             fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
           "
 
-      - run: npm publish
+      - name: Publish to GitHub Packages
+        run: npm publish --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

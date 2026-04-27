@@ -113,13 +113,18 @@ jobs:
         with:
           node-version: 24
           registry-url: "https://npm.pkg.github.com"
-          scope: "@ossrandom"
+          scope: "@randomcodespace"
 
-      - name: Point publishConfig at GitHub Packages
+      - name: Rewrite name + publishConfig for GitHub Packages
+        # GHP requires the npm scope to match the repo owner. We rewrite
+        # `@ossrandom/design-system` → `@randomcodespace/design-system`
+        # in the artifact's package.json before publishing. The committed
+        # package.json keeps the canonical npm name.
         run: |
           node -e "
             const fs = require('fs');
             const p  = JSON.parse(fs.readFileSync('package.json','utf8'));
+            p.name = '@randomcodespace/design-system';
             p.publishConfig = { access: 'public', registry: 'https://npm.pkg.github.com' };
             fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
           "

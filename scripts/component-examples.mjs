@@ -1,6 +1,6 @@
 /**
- * Auto-generate Ant-Design-style demos for every component, derived
- * entirely from the parsed prop interface in `src/components.d.ts`.
+ * Auto-generate one-or-more demos per component, derived entirely from
+ * the parsed prop interface in `src/components.d.ts`.
  *
  * Heuristics:
  *   - Stateful pattern (`open` + `onClose`) → "Open me" demo with useState.

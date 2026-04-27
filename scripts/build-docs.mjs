@@ -494,7 +494,7 @@ function renderDocsCss() {
   color: var(--fg-4);
 }
 
-/* ── Ant-Design-style demo cards ─────────────────────────────────────── */
+/* ── Per-demo cards (render area + meta bar + collapsible code) ───────── */
 .block.demos { margin-bottom: 48px; }
 .block.demos > h2 { margin-bottom: 16px; }
 .demo {

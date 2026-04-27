@@ -182,8 +182,12 @@ jobs:
         with: { name: dist, path: artifact }
 
       - name: Pack tarball
+        # `--ignore-scripts` skips prepublishOnly (which calls pnpm and
+        # would fail in this minimal job). The dest dir must exist —
+        # npm pack does not create it.
         run: |
-          cd artifact && npm pack --pack-destination ../release-assets
+          mkdir -p release-assets
+          cd artifact && npm pack --ignore-scripts --pack-destination ../release-assets
           ls -la ../release-assets
 
       - uses: softprops/action-gh-release@v3

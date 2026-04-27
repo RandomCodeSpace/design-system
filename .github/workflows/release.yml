@@ -1,11 +1,13 @@
 name: Release
 
-# Manual-only for now. Re-enable the tag-push trigger once NPM_TOKEN is set
-# and you want SemVer tags (v1.2.3) to fire a dual-publish automatically.
+# Fires on a SemVer tag push (`vX.Y.Z`). Builds once, then publishes to
+# npm + GitHub Packages and creates a GitHub Release. Use `pnpm version`
+# locally to bump and tag in one go, then `git push --follow-tags`.
+# Manual `workflow_dispatch` is kept for re-publishing an existing tag.
 on:
-  # push:
-  #   tags:
-  #     - "v*.*.*"
+  push:
+    tags:
+      - "v*.*.*"
   workflow_dispatch:
     inputs:
       tag:

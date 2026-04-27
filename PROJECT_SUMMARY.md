@@ -40,7 +40,7 @@ design-system/
 ├── src/                          — published source
 │   ├── index.tsx                 public ESM entry; re-exports everything
 │   ├── tokens.ts                 token type unions
-│   ├── components.d.ts           every prop interface (types-only, hand-written)
+│   ├── components.ts             every prop interface (types-only, hand-written)
 │   ├── styles.css                .rcs-* component styles
 │   ├── internal/
 │   │   └── cx.ts                 cx / noop / uid
@@ -113,7 +113,7 @@ Top rules — see `docs/project/conventions.md` for the full set with examples.
 
 - **One component category per file** under `src/components/`. To add a component: create or edit a category file, export the runtime, add the prop interface to `src/components.ts`, add a re-export line to `src/index.tsx`. Don't introduce per-component directories.
 - **`src/components.ts` is types-only and hand-written.** Components import their props as `import type { XProps } from "../components"` (`src/components/buttons.tsx:7`). Do not generate it, do not split it. The file is `.ts` (not `.d.ts`) so it lints/typechecks with the rest of the source — but it must remain runtime-export-free (interfaces and `type` aliases only).
-- **Every prop interface extends `BaseProps`** (`{ id, className, style, "data-testid" }` — `src/components.d.ts:25-30`) and uses `readonly` on every field.
+- **Every prop interface extends `BaseProps`** (`{ id, className, style, "data-testid" }` — `src/components.ts:25-30`) and uses `readonly` on every field.
 - **Generic components** (`Select<V>`, `Combobox<V>`, `Tabs<K>`, `Menu<K>`, `RadioGroup<V>`, `Table<T>`) take their generic from a value/key/row type. Preserve generics when editing — don't widen to `any`.
 - **CSS class prefix is `.rcs-*`**, BEM-ish modifiers as `.rcs-foo--variant`. `cx()` from `src/internal/cx.ts` is the only className composer; do not pull in `clsx`/`classnames`.
 - **No runtime dependencies.** React/ReactDOM are `peerDependencies` (`package.json:44-46`). Adding a runtime dep is a deliberate, reviewed decision.

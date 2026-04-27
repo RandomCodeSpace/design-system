@@ -14,7 +14,7 @@
  *                            prop signature and one canonical example.
  *
  * Source of truth is the same as build-docs.mjs:
- *   src/components.d.ts  → prop interfaces
+ *   src/components.ts    → prop interfaces
  *   src/tokens.ts        → token unions
  *   src/index.tsx        → runtime exports → category file
  */
@@ -27,7 +27,7 @@ const root = process.cwd();
 const outDir = resolve(root, process.argv[2] || "_site");
 mkdirSync(outDir, { recursive: true });
 
-const componentsDts = readFileSync(join(root, "src/components.d.ts"), "utf8");
+const componentsDts = readFileSync(join(root, "src/components.ts"), "utf8");
 const tokensTs = readFileSync(join(root, "src/tokens.ts"), "utf8");
 const indexTsx = readFileSync(join(root, "src/index.tsx"), "utf8");
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
@@ -138,7 +138,7 @@ function renderLlmsFullTxt() {
   let out = "";
   out += `# RandomCodeSpace Design System — Full reference\n\n`;
   out += `> Every component with its prop signature and one canonical example. `;
-  out += `Auto-generated from src/components.d.ts on every Pages build.\n\n`;
+  out += `Auto-generated from src/components.ts on every Pages build.\n\n`;
   out += `Package: \`${PKG_NPM}\` (npm) · \`${PKG_GHP}\` (GitHub Packages)\n`;
   out += `Live docs: ${SITE_BASE}/docs/\n\n`;
 

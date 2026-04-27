@@ -1,9 +1,9 @@
 /**
- * Reusable parsers for `src/components.d.ts`, `src/tokens.ts`, and
+ * Reusable parsers for `src/components.ts`, `src/tokens.ts`, and
  * `src/index.tsx`. Used by both `build-docs.mjs` and `build-llms.mjs`.
  *
  * Pure regex — depends on the well-formatted hand-written shape of
- * components.d.ts (one `;`-terminated member per line; interface header
+ * components.ts (one `;`-terminated member per line; interface header
  * on a single line; `readonly`/`?` markers).
  */
 

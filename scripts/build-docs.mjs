@@ -17,7 +17,7 @@
  *   <outDir>/docs/<Name>/index.html     (one per runtime export)
  *
  * Source of truth (parsed from the repo):
- *   src/components.d.ts  (interfaces, supporting types)
+ *   src/components.ts    (interfaces, supporting types)
  *   src/tokens.ts        (token unions)
  *   src/index.tsx        (runtime export → category file)
  *
@@ -36,7 +36,7 @@ const root = process.cwd();
 const outDir = resolve(root, process.argv[2] || "_site");
 mkdirSync(outDir, { recursive: true });
 
-const componentsDts = readFileSync(join(root, "src/components.d.ts"), "utf8");
+const componentsDts = readFileSync(join(root, "src/components.ts"), "utf8");
 const tokensTs = readFileSync(join(root, "src/tokens.ts"), "utf8");
 const indexTsx = readFileSync(join(root, "src/index.tsx"), "utf8");
 const colorsAndTypeCss = readFileSync(join(root, "colors_and_type.css"), "utf8");

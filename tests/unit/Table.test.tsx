@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Table } from "../../src/components/data-display";
-import type { TableColumn } from "../../src/components.d";
+import type { TableColumn } from "../../src/components";
 
 interface Row { id: string; region: string; cpu: number }
 

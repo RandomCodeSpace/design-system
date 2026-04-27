@@ -51,7 +51,8 @@ jobs:
 
       - name: Verify tag matches package version
         run: |
-          TAG="${GITHUB_REF_NAME#refs/tags/}"
+          INPUT="${{ github.event.inputs.tag }}"
+          TAG="${INPUT:-${GITHUB_REF_NAME#refs/tags/}}"
           PKG="v${{ steps.read.outputs.version }}"
           echo "tag=$TAG  pkg=$PKG"
           if [ "$TAG" != "$PKG" ]; then

@@ -6,8 +6,8 @@
 // are copied to dist/assets/fonts/ so consumers receive a fully
 // self-contained, air-gap-safe stylesheet.
 
-import { readFileSync, writeFileSync, cpSync, rmSync, existsSync, mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { readFileSync, writeFileSync, cpSync, rmSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -52,4 +52,35 @@ if (!existsSync(componentsDts)) {
   );
 }
 
-console.log("build-assets: dist/styles.css + dist/assets/fonts/ written");
+// Rewrite extensionless relative ESM imports (`from "./foo"`) to
+// include `.js` so Node's strict ESM loader can resolve them. tsc with
+// `moduleResolution: "Bundler"` keeps source extensionless — fine inside
+// a bundler, but breaks under Node ESM. We patch the emitted .js + .d.ts
+// here rather than forcing source-side extensions across every component.
+const RELATIVE_IMPORT = /((?:^|\s)(?:import|export)\s*(?:[\s\S]*?)\sfrom\s*|\bimport\s*\(\s*)(["'])(\.{1,2}\/[^"']+?)(["'])/g;
+const HAS_EXTENSION = /\.(?:[mc]?js|json|css|d\.ts)$/;
+function rewriteRelativeImports(source) {
+  return source.replace(RELATIVE_IMPORT, (match, lead, q1, path, q2) => {
+    if (HAS_EXTENSION.test(path)) return match;
+    return `${lead}${q1}${path}.js${q2}`;
+  });
+}
+function walk(dir, out = []) {
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) walk(full, out);
+    else if (full.endsWith(".js") || full.endsWith(".d.ts")) out.push(full);
+  }
+  return out;
+}
+let rewritten = 0;
+for (const file of walk(distDir)) {
+  const original = readFileSync(file, "utf8");
+  const next = rewriteRelativeImports(original);
+  if (next !== original) {
+    writeFileSync(file, next, "utf8");
+    rewritten += 1;
+  }
+}
+
+console.log(`build-assets: dist/styles.css + dist/assets/fonts/ written; ${rewritten} files patched for ESM imports`);

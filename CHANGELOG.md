@@ -4,6 +4,14 @@ All notable changes to `@ossrandom/design-system` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] — 2026-04-27
+
+### Fixed
+
+- **Node ESM resolution.** `dist/*.js` and `dist/*.d.ts` now ship with explicit `.js` extensions on relative imports (e.g. `from "./components/buttons.js"`). Previously tsc emitted extensionless paths under `moduleResolution: "Bundler"`, which Node's strict ESM loader rejects with `Cannot find module …/components/buttons`. Build now post-processes emitted files via `scripts/build-assets.mjs`.
+
+  This was a latent bug in `0.2.0` (and inherited by `0.1.x`) — only surfaced now because consumers previously linked the package via `link:`, which routed Vite/Vitest through source resolution. Pulling the published tarball under strict ESM caught it.
+
 ## [0.2.0] — 2026-04-27
 
 A premium-typography release with new compact `PageHeader` variants, scrollable `Tabs`, broader a11y prop forwarding, and a richer token palette (elevation, focus, inset highlights). Drop-in for `0.1.x` consumers — no public API removals.

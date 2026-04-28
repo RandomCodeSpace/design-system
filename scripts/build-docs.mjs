@@ -736,12 +736,17 @@ function renderRootIndex() {
 
   <section class="section">
     <h2>Start here</h2>
-    <p class="blurb">Three places to begin, depending on what you need.</p>
+    <p class="blurb">Four places to begin, depending on what you need.</p>
     <div class="grid lg">
       <a class="card" href="docs/">
         <div class="kind">/docs/</div>
         <div class="name">Component reference</div>
         <div class="desc">Live previews, props tables, related types, and source links for every export.</div>
+      </a>
+      <a class="card" href="docs/foundations/">
+        <div class="kind">/docs/foundations/</div>
+        <div class="name">Foundations</div>
+        <div class="desc">Design tokens — color, typography, spacing, radii, shadows, motion — read live from the stylesheet.</div>
       </a>
       <a class="card" href="docs/playground/">
         <div class="kind">/docs/playground/</div>
@@ -914,12 +919,27 @@ function renderDocsIndex() {
     <span class="install-prefix">$</span>
     <span>npm install ${escapeHtml(pkg.name)}</span>
   </div>
+  <section class="section">
+    <h2>Foundations</h2>
+    <p class="blurb">Start with the design tokens — colors, typography, spacing, radii, shadows, motion. Live values, theme-aware.</p>
+    <div class="grid">
+      <a class="card" href="foundations/">
+        <div class="kind">/docs/foundations/</div>
+        <div class="name">Design tokens</div>
+        <div class="meta">${tokenTypeAliases.length} token type${tokenTypeAliases.length === 1 ? "" : "s"}</div>
+      </a>
+    </div>
+  </section>
   ${cats}
 </main>`;
   return htmlShell({ title: `Components — ${pkg.name}`, depth: 1, active: "components", body });
 }
 
 function renderSidebar(activeName) {
+  const foundationsBlock = `<li class="cat">
+      <a class="cat-label" href="../foundations/">Foundations</a>
+      <ul><li><a href="../foundations/">Design tokens</a></li></ul>
+    </li>`;
   const blocks = DOCS_CATEGORIES.map((cat) => {
     const items = exportsByCategory.get(cat.id);
     if (!items.length) return "";
@@ -928,7 +948,7 @@ function renderSidebar(activeName) {
       <ul>${items.map((n) => `<li><a class="${n === activeName ? "active" : ""}" href="../${n}/">${escapeHtml(n)}</a></li>`).join("")}</ul>
     </li>`;
   }).join("");
-  return `<ul class="nav">${blocks}</ul>`;
+  return `<ul class="nav">${foundationsBlock}${blocks}</ul>`;
 }
 
 function renderPropsTable(iface) {
@@ -1218,12 +1238,333 @@ function renderPlaygroundPage() {
   return htmlShell({ title: `Playground — ${pkg.name}`, depth: 2, active: "playground", body, head, tail });
 }
 
+// ─── Foundations page (live design tokens) ───────────────────────────
+// Reads tokens.ts and colors_and_type.css so the page mirrors the
+// system 1:1; swatch background-colors are read via getComputedStyle
+// so we never duplicate hex literals in the generator.
+function renderFoundationsPage() {
+  const tokenList = (...names) => names.map((n) => ({ name: n }));
+  const brandReds = tokenList(
+    "--brand-red-50",  "--brand-red-100", "--brand-red-200", "--brand-red-300", "--brand-red-400",
+    "--brand-red-500", "--brand-red-600", "--brand-red-700", "--brand-red-800", "--brand-red-900",
+  );
+  const brandGrays = tokenList(
+    "--brand-gray-50",  "--brand-gray-100", "--brand-gray-200", "--brand-gray-300", "--brand-gray-400",
+    "--brand-gray-500", "--brand-gray-600", "--brand-gray-700", "--brand-gray-800", "--brand-gray-900",
+  );
+  const semantic = [
+    { label: "accent",       css: "--accent" },
+    { label: "accent-hover", css: "--accent-hover" },
+    { label: "accent-press", css: "--accent-press" },
+    { label: "accent-soft",  css: "--accent-soft" },
+    { label: "accent-fg",    css: "--accent-fg" },
+  ];
+  const surfaces = [
+    { label: "bg-0", css: "--bg-0" }, { label: "bg-1", css: "--bg-1" },
+    { label: "bg-2", css: "--bg-2" }, { label: "bg-3", css: "--bg-3" },
+    { label: "fg-1", css: "--fg-1" }, { label: "fg-2", css: "--fg-2" },
+    { label: "fg-3", css: "--fg-3" }, { label: "fg-4", css: "--fg-4" },
+    { label: "border-1", css: "--border-1" }, { label: "border-2", css: "--border-2" }, { label: "border-3", css: "--border-3" },
+  ];
+  const typeScale = [
+    { label: "display", fs: "--fs-display", lh: "--lh-display", ls: "--ls-display", weight: 600, sample: "Strongly typed UI." },
+    { label: "h1",      fs: "--fs-h1",      lh: "--lh-h1",      ls: "--ls-h1",      weight: 600, sample: "Component headline" },
+    { label: "h2",      fs: "--fs-h2",      lh: "--lh-h2",      ls: "--ls-h2",      weight: 600, sample: "Section heading" },
+    { label: "h3",      fs: "--fs-h3",      lh: "--lh-h3",      ls: "--ls-h3",      weight: 600, sample: "Subsection title" },
+    { label: "h4",      fs: "--fs-h4",      lh: "--lh-h4",      ls: "--ls-h4",      weight: 600, sample: "Inline heading" },
+    { label: "body",    fs: "--fs-body",    lh: "--lh-body",    ls: "--ls-body",    weight: 400, sample: "Body copy at the default reading scale — comfortable for sustained text." },
+    { label: "small",   fs: "--fs-small",   lh: "--lh-small",   ls: "--ls-small",   weight: 400, sample: "Compact metadata, secondary captions, small footers." },
+    { label: "micro",   fs: "--fs-micro",   lh: "--lh-micro",   ls: "--ls-micro",   weight: 500, sample: "MICRO LABEL · MONO · UPPERCASE", mono: true, upper: true },
+    { label: "code",    fs: "--fs-code",    lh: "--lh-code",    ls: "0",            weight: 400, sample: "const cx = (...c) => c.filter(Boolean).join(' ')", mono: true },
+  ];
+  const fontFamilies = [
+    { label: "display", css: "--font-display", sample: "Bricolage Grotesque" },
+    { label: "sans",    css: "--font-sans",    sample: "The quick brown fox jumps over the lazy dog. 0123456789" },
+    { label: "mono",    css: "--font-mono",    sample: "function ƒ(x: T): U { return x as unknown as U; }" },
+  ];
+  const spaces = [
+    "--space-1", "--space-1\\.5", "--space-2", "--space-2\\.5", "--space-3", "--space-4",
+    "--space-5", "--space-6", "--space-8", "--space-10", "--space-12", "--space-16", "--space-20", "--space-24",
+  ];
+  const radii = ["--radius-xs", "--radius-sm", "--radius-md", "--radius-lg", "--radius-xl", "--radius-2xl", "--radius-full"];
+  const shadows = ["--shadow-xs", "--shadow-sm", "--shadow-md", "--shadow-lg"];
+  const motion = [
+    { dur: "--dur-instant", ease: "--ease-out-quart", label: "instant · ease-out-quart" },
+    { dur: "--dur-fast",    ease: "--ease-out-expo",  label: "fast · ease-out-expo" },
+    { dur: "--dur-base",    ease: "--ease-in-out",    label: "base · ease-in-out" },
+    { dur: "--dur-slow",    ease: "--ease-spring",    label: "slow · ease-spring" },
+  ];
+
+  const swatchGrid = (group) => `<div class="fnd-swatch-grid">${group.map((s) => {
+    const css = s.css || s.name;
+    return `<div class="fnd-swatch" data-css="${escapeHtml(css)}">
+      <div class="fnd-swatch-chip" style="background:var(${css.replace(/\\\./g, ".")})"></div>
+      <div class="fnd-swatch-meta">
+        <code class="fnd-swatch-name">${escapeHtml(s.label || css.replace(/^--/, ""))}</code>
+        <code class="fnd-swatch-hex" data-hex></code>
+      </div>
+    </div>`;
+  }).join("")}</div>`;
+
+  const typeRows = typeScale.map((t) => `<div class="fnd-type-row">
+    <div class="fnd-type-meta">
+      <code>${escapeHtml(t.label)}</code>
+      <span class="fnd-type-meta-detail" data-fs="${t.fs}" data-lh="${t.lh}" data-ls="${t.ls}"></span>
+    </div>
+    <div class="fnd-type-sample" style="font-family: var(${t.mono ? "--font-mono" : (t.label === "display" ? "--font-display" : "--font-sans")}); font-size: var(${t.fs}); line-height: var(${t.lh}); letter-spacing: var(${t.ls}); font-weight: ${t.weight}; ${t.upper ? "text-transform:uppercase;" : ""}">${escapeHtml(t.sample)}</div>
+  </div>`).join("");
+
+  const fontRows = fontFamilies.map((f) => `<div class="fnd-font-row">
+    <div class="fnd-type-meta"><code>${escapeHtml(f.label)}</code><span class="fnd-type-meta-detail" data-css="${f.css}"></span></div>
+    <div class="fnd-font-sample" style="font-family: var(${f.css});">${escapeHtml(f.sample)}</div>
+  </div>`).join("");
+
+  const spaceRows = spaces.map((s) => {
+    const escaped = s.replace(/\\\./g, ".");
+    return `<div class="fnd-space-row">
+      <code class="fnd-space-name">${escapeHtml(s.replace(/\\/g, ""))}</code>
+      <div class="fnd-space-bar" style="width: var(${escaped});"></div>
+      <code class="fnd-space-value" data-css="${escaped}"></code>
+    </div>`;
+  }).join("");
+
+  const radiiRows = radii.map((r) => `<div class="fnd-radius-row">
+    <div class="fnd-radius-box" style="border-radius: var(${r});"></div>
+    <code>${escapeHtml(r.replace(/^--/, ""))}</code>
+    <code class="fnd-radius-value" data-css="${r}"></code>
+  </div>`).join("");
+
+  const shadowRows = shadows.map((s) => `<div class="fnd-shadow-row">
+    <div class="fnd-shadow-box" style="box-shadow: var(${s});"></div>
+    <code>${escapeHtml(s.replace(/^--/, ""))}</code>
+  </div>`).join("");
+
+  const motionRows = motion.map((m, i) => `<div class="fnd-motion-row">
+    <div class="fnd-motion-box" data-dur="${m.dur}" data-ease="${m.ease}" data-i="${i}"></div>
+    <code>${escapeHtml(m.label)}</code>
+    <button type="button" class="demo-action fnd-motion-trigger" data-i="${i}">▷ Replay</button>
+  </div>`).join("");
+
+  const tokenAliasRows = tokenTypeAliases.map((t) => `<tr>
+    <td><code>${escapeHtml(t.name)}</code></td>
+    <td><code>${escapeHtml(t.value.length > 96 ? t.value.slice(0, 93) + "…" : t.value)}</code></td>
+  </tr>`).join("");
+
+  const body = `<main class="page-wrap fnd-page">
+  <p class="eyebrow">Foundations</p>
+  <h1 class="page-h1">Design tokens.</h1>
+  <p class="lede">
+    Every token in the system, read live from <code>colors_and_type.css</code> via CSS custom properties.
+    Hex values resolve at runtime, so what you see here matches what your app gets when you import
+    <code>${escapeHtml(pkg.name)}/styles.css</code>. Switch the global theme toggle to see surface tokens flip.
+  </p>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Color · Brand red</h2>
+    <p class="fnd-blurb">Signal Red is the only accent. The full red ramp is reserved for charts and edge cases — production UI should reach for <code>--accent</code>, <code>--accent-hover</code>, <code>--accent-press</code>, <code>--accent-soft</code>.</p>
+    ${swatchGrid(brandReds)}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Color · Brand gray</h2>
+    <p class="fnd-blurb">Cod Gray ramp drives every neutral surface and ink shade. Pulls from <code>--bg-*</code> and <code>--fg-*</code> at runtime.</p>
+    ${swatchGrid(brandGrays)}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Accent · semantic</h2>
+    <p class="fnd-blurb">Action color, hover/press states, and the soft tint behind selected items.</p>
+    ${swatchGrid(semantic)}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Surface &amp; ink</h2>
+    <p class="fnd-blurb">Theme-aware tokens — these flip when <code>data-theme</code> swaps. The chips below resolve through <code>:root</code>, <code>[data-theme="light"]</code>, and <code>[data-theme="dark"]</code> blocks.</p>
+    ${swatchGrid(surfaces)}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Typography · families</h2>
+    <p class="fnd-blurb">Three families. Display for impact, sans for body, mono for code &amp; micro labels.</p>
+    ${fontRows}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Typography · scale</h2>
+    <p class="fnd-blurb">Each row uses its corresponding <code>--fs-*</code> + <code>--lh-*</code> + <code>--ls-*</code> custom properties.</p>
+    ${typeRows}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Spacing</h2>
+    <p class="fnd-blurb">A 4px-stepped scale plus half-steps where the grain of an interface needs them. Bars below render at the literal pixel value.</p>
+    <div class="fnd-space-list">${spaceRows}</div>
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Radii</h2>
+    <p class="fnd-blurb">Tight by default. <code>radius-sm</code> (4px) is the system default — Linear-style.</p>
+    <div class="fnd-radius-grid">${radiiRows}</div>
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Shadows</h2>
+    <p class="fnd-blurb">Two-layer shadows for depth without haze. Darker, smaller layer for the edge; broader, softer layer for the diffuse halo.</p>
+    <div class="fnd-shadow-grid">${shadowRows}</div>
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Motion</h2>
+    <p class="fnd-blurb">Each box loops through translate + opacity using its labeled duration and easing. Click ▷ Replay to trigger.</p>
+    <div class="fnd-motion-list">${motionRows}</div>
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">TypeScript types</h2>
+    <p class="fnd-blurb">Imported from <code>${escapeHtml(pkg.name)}/tokens</code>. Use these to constrain props at compile time.</p>
+    <table class="props"><thead><tr><th>Type</th><th>Value</th></tr></thead><tbody>${tokenAliasRows}</tbody></table>
+  </section>
+</main>
+<style>
+  .fnd-page { max-width: 1080px; }
+  .fnd-section { margin: 0 0 56px; }
+  .fnd-h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.014em; margin: 0 0 6px; font-family: var(--font-sans); color: var(--fg-1); }
+  .fnd-blurb { color: var(--fg-2); font-size: 13.5px; line-height: 1.55; margin: 0 0 18px; max-width: 64ch; }
+
+  /* Swatch grid */
+  .fnd-swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1px; background: var(--border-1); border: 1px solid var(--border-1); border-radius: 4px; overflow: hidden; }
+  .fnd-swatch { background: var(--bg-1); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .fnd-swatch-chip { width: 100%; height: 56px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(28,28,28,0.08); }
+  .fnd-swatch-meta { display: flex; flex-direction: column; gap: 2px; }
+  .fnd-swatch-name { font-family: var(--font-mono); font-size: 11px; color: var(--fg-1); }
+  .fnd-swatch-hex { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); letter-spacing: 0.04em; min-height: 14px; }
+
+  /* Type rows */
+  .fnd-type-row, .fnd-font-row { display: grid; grid-template-columns: 160px 1fr; gap: 24px; padding: 14px 0; border-bottom: 1px solid var(--border-1); align-items: baseline; }
+  .fnd-type-row:last-child, .fnd-font-row:last-child { border-bottom: none; }
+  .fnd-type-meta { display: flex; flex-direction: column; gap: 4px; }
+  .fnd-type-meta code { font-family: var(--font-mono); font-size: 11px; color: var(--fg-1); }
+  .fnd-type-meta-detail { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3); letter-spacing: 0.04em; }
+  .fnd-type-sample { color: var(--fg-1); }
+  .fnd-font-sample { color: var(--fg-1); font-size: 18px; line-height: 1.55; }
+  @media (max-width: 720px) {
+    .fnd-type-row, .fnd-font-row { grid-template-columns: 1fr; gap: 8px; }
+    .fnd-font-sample { font-size: 15px; }
+  }
+
+  /* Spacing scale */
+  .fnd-space-list { display: flex; flex-direction: column; gap: 4px; }
+  .fnd-space-row { display: grid; grid-template-columns: 80px 1fr 60px; gap: 16px; align-items: center; padding: 6px 0; }
+  .fnd-space-name { font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); }
+  .fnd-space-bar { height: 18px; background: var(--accent); border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+  .fnd-space-value { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); text-align: right; }
+
+  /* Radii */
+  .fnd-radius-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+  .fnd-radius-row { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; border: 1px solid var(--border-1); border-radius: 4px; background: var(--bg-1); }
+  .fnd-radius-box { width: 100%; height: 64px; background: var(--bg-2); border: 1px solid var(--border-2); }
+  .fnd-radius-row code { font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); }
+  .fnd-radius-value { color: var(--fg-3) !important; }
+
+  /* Shadows */
+  .fnd-shadow-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px; padding: 16px 0; }
+  .fnd-shadow-row { display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 24px 0 12px; }
+  .fnd-shadow-box { width: 80%; height: 64px; background: var(--bg-1); border-radius: 4px; }
+  .fnd-shadow-row code { font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); }
+
+  /* Motion */
+  .fnd-motion-list { display: flex; flex-direction: column; gap: 10px; }
+  .fnd-motion-row { display: grid; grid-template-columns: 60px 1fr 100px; gap: 16px; align-items: center; padding: 12px 16px; border: 1px solid var(--border-1); border-radius: 4px; background: var(--bg-1); }
+  .fnd-motion-box {
+    width: 32px; height: 32px; background: var(--accent); border-radius: 4px;
+    transform: translateX(0); opacity: 1;
+  }
+  .fnd-motion-box.run { animation: fnd-motion-run var(--dur, 220ms) var(--ease, ease) forwards; }
+  @keyframes fnd-motion-run {
+    0% { transform: translateX(0); opacity: 0.3; }
+    50% { transform: translateX(180px); opacity: 1; }
+    100% { transform: translateX(0); opacity: 0.3; }
+  }
+  .fnd-motion-row code { font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); }
+  .fnd-motion-trigger { width: 100%; }
+
+  table.props { margin: 0; }
+</style>`;
+
+  const head = `<link rel="stylesheet" href="../../dist/styles.css">
+  <link rel="stylesheet" href="../docs.css">`;
+
+  const tail = `<script>
+  (function () {
+    var root = document.documentElement;
+    function refresh() {
+      var cs = getComputedStyle(root);
+      // Swatch hex values
+      document.querySelectorAll('.fnd-swatch').forEach(function (el) {
+        var css = el.getAttribute('data-css');
+        var v = cs.getPropertyValue(css.replace(/\\\\./g, '.')).trim();
+        var hex = el.querySelector('[data-hex]');
+        if (hex) hex.textContent = v;
+      });
+      // Type meta text
+      document.querySelectorAll('.fnd-type-meta-detail').forEach(function (el) {
+        if (el.dataset.fs) {
+          var fs = cs.getPropertyValue(el.dataset.fs).trim();
+          var lh = cs.getPropertyValue(el.dataset.lh).trim();
+          var ls = cs.getPropertyValue(el.dataset.ls).trim();
+          el.textContent = fs + ' / ' + lh + (ls && ls !== '0' ? ' / ' + ls : '');
+        } else if (el.dataset.css) {
+          var fam = cs.getPropertyValue(el.dataset.css).trim();
+          var primary = fam.split(',')[0].replace(/['"]/g, '').trim();
+          el.textContent = primary;
+        }
+      });
+      // Space values
+      document.querySelectorAll('.fnd-space-value').forEach(function (el) {
+        var v = cs.getPropertyValue(el.getAttribute('data-css')).trim();
+        el.textContent = v;
+      });
+      // Radius values
+      document.querySelectorAll('.fnd-radius-value').forEach(function (el) {
+        var v = cs.getPropertyValue(el.getAttribute('data-css')).trim();
+        el.textContent = v;
+      });
+    }
+    refresh();
+    // Re-resolve on theme switch
+    var obs = new MutationObserver(refresh);
+    obs.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Motion replay buttons
+    function play(el) {
+      var dur = getComputedStyle(root).getPropertyValue(el.dataset.dur).trim();
+      var ease = getComputedStyle(root).getPropertyValue(el.dataset.ease).trim();
+      el.style.setProperty('--dur', dur);
+      el.style.setProperty('--ease', ease);
+      el.classList.remove('run');
+      void el.offsetWidth; // restart animation
+      el.classList.add('run');
+    }
+    document.querySelectorAll('.fnd-motion-box').forEach(play);
+    document.querySelectorAll('.fnd-motion-trigger').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var box = document.querySelector('.fnd-motion-box[data-i="' + btn.dataset.i + '"]');
+        if (box) play(box);
+      });
+    });
+  })();
+</script>`;
+
+  return htmlShell({ title: `Foundations — ${pkg.name}`, depth: 2, active: "components", body, head, tail });
+}
+
 // ─── 9. Write all output files ────────────────────────────────────────
 mkdirSync(outDir, { recursive: true });
 mkdirSync(join(outDir, "dist"), { recursive: true });
 mkdirSync(join(outDir, "apps"), { recursive: true });
 mkdirSync(join(outDir, "docs"), { recursive: true });
 mkdirSync(join(outDir, "docs/playground"), { recursive: true });
+mkdirSync(join(outDir, "docs/foundations"), { recursive: true });
 
 writeFileSync(join(outDir, "site.css"), renderSiteCss());
 writeFileSync(join(outDir, "dist/styles.css"), colorsAndTypeCss + "\n" + componentStylesCss);
@@ -1235,6 +1576,7 @@ writeFileSync(join(outDir, "docs/index.html"), renderDocsIndex());
 writeFileSync(join(outDir, "docs/docs.css"), renderDocsCss());
 writeFileSync(join(outDir, "docs/runner.js"), renderRunner());
 writeFileSync(join(outDir, "docs/playground/index.html"), renderPlaygroundPage());
+writeFileSync(join(outDir, "docs/foundations/index.html"), renderFoundationsPage());
 
 let count = 0;
 for (const name of ALL_NAMES) {
@@ -1245,6 +1587,6 @@ for (const name of ALL_NAMES) {
 }
 
 console.log(`Wrote site to ${outDir}`);
-console.log(`  ${count} component pages (${runtimeExports.size} core + ${chartExports.size} charts), 1 docs index, 1 playground, 1 apps index, 1 root`);
+console.log(`  ${count} component pages (${runtimeExports.size} core + ${chartExports.size} charts), 1 foundations, 1 docs index, 1 playground, 1 apps index, 1 root`);
 console.log(`  ${runtimeExports.size + chartExports.size} runtime exports across ${DOCS_CATEGORIES.filter((c) => exportsByCategory.get(c.id).length > 0).length} docs categories`);
 console.log(`  ${tokenTypeAliases.length} tokens, ${interfaces.length} interfaces, ${componentTypeAliases.length} type aliases`);

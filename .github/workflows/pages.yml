@@ -1,8 +1,8 @@
 name: Pages
 
 # Deploys the demo site to GitHub Pages.
-# Source published: colors_and_type.css + assets/ + preview/ + ui_kits/
-# plus an auto-generated landing index.html and preview/index.html.
+# Source published: colors_and_type.css + assets/ + ui_kits/
+# plus the auto-generated landing index.html and per-component pages.
 
 on:
   push:
@@ -10,7 +10,6 @@ on:
     paths:
       - "colors_and_type.css"
       - "assets/**"
-      - "preview/**"
       - "ui_kits/**"
       - "src/**"
       - "scripts/**"

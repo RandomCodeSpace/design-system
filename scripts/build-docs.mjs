@@ -8,7 +8,6 @@
  *   <outDir>/index.html                 (site landing)
  *   <outDir>/site.css                   (shared header/footer + global)
  *   <outDir>/apps/index.html            (sample apps gallery)
- *   <outDir>/preview/index.html         (brand spec cards index)
  *   <outDir>/dist/styles.css            (concat colors_and_type.css + src/styles.css)
  *   <outDir>/docs/index.html            (component reference, card grid)
  *   <outDir>/docs/docs.css              (per-component page styles)
@@ -22,8 +21,8 @@
  *   src/index.tsx        (runtime export → category file)
  *   src/charts/index.ts  (charts subpath exports — "Charts" category)
  *
- * The Pages workflow stages assets/, preview/*.html, ui_kits/, then runs
- * this script (which overwrites /preview/index.html with a styled one).
+ * Every component page renders the live React component via the IIFE
+ * bundle plus Babel-standalone. There are no hand-written HTML cards.
  *
  * Pure Node built-ins.
  */
@@ -146,7 +145,6 @@ const NAV_ITEMS = [
   { id: "components", label: "Components",  path: "docs/" },
   { id: "playground", label: "Playground",  path: "docs/playground/" },
   { id: "apps",       label: "Sample apps", path: "apps/" },
-  { id: "spec",       label: "Spec cards",  path: "preview/" },
 ];
 
 function renderHeader(active, depth) {
@@ -209,7 +207,6 @@ function renderFooter(depth) {
     <a href="${p}docs/">Components</a>
     <a href="${p}docs/playground/">Playground</a>
     <a href="${p}apps/">Sample apps</a>
-    <a href="${p}preview/">Spec cards</a>
   </div>
   <div class="site-footer-col">
     <a href="${REPO_URL}" target="_blank" rel="noopener">GitHub ↗</a>
@@ -516,26 +513,6 @@ function renderDocsCss() {
 }
 .snippet code { font-size: 12.5px; line-height: 1.55; color: var(--fg-1); }
 
-.preview-frame {
-  border: 1px solid var(--border-1); border-radius: 4px;
-  padding: 32px; min-height: 120px;
-  background: var(--bg-1);
-  background-image:
-    linear-gradient(45deg, var(--bg-2) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--bg-2) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--bg-2) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--bg-2) 75%);
-  background-size: 16px 16px;
-  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
-  position: relative;
-}
-.preview-frame::before {
-  content: "PREVIEW";
-  position: absolute; top: 8px; right: 12px;
-  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
-  color: var(--fg-4);
-}
-
 /* ── Per-demo cards (render area + meta bar + collapsible code) ───────── */
 .block.demos { margin-bottom: 48px; }
 .block.demos > h2 { margin-bottom: 16px; }
@@ -599,24 +576,7 @@ function renderDocsCss() {
   color: var(--fg-1); line-height: 1.55; white-space: pre;
 }
 
-/* Charts: static placeholder where live preview would be, plus peer-dep list. */
-.demo-render--static {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 120px; padding: 24px;
-  background: var(--bg-2);
-  background-image:
-    repeating-linear-gradient(
-      45deg, transparent, transparent 8px,
-      var(--bg-1) 8px, var(--bg-1) 9px
-    );
-}
-.demo-static-note {
-  font-family: var(--font-mono); font-size: 11px; line-height: 1.55;
-  color: var(--fg-3); text-align: center; max-width: 48ch;
-  background: var(--bg-1); border: 1px solid var(--border-1); border-radius: 4px;
-  padding: 10px 14px;
-}
-.demo-static-note a { color: var(--accent); }
+/* Charts: peer-dep list (live preview now renders via window.RCSCharts). */
 ul.peer-deps {
   list-style: none; margin: 0; padding: 0;
   display: flex; flex-direction: column; gap: 6px;
@@ -670,35 +630,37 @@ html { scroll-behavior: smooth; }
 }
 
 function renderRunner() {
-  return `// Shared runtime for component live previews and the playground.
-// Loaded after window.RCS (from /docs/bundle/rcs.iife.js) and Babel-standalone.
+  return `// Shared runtime for component live previews, the playground, and the
+// charts subpath. Loaded after the IIFE bundle(s) and Babel-standalone.
+//
+//   runExample(code, targetId)        — core components, uses window.RCS
+//   runChartExample(code, targetId)   — chart components, uses window.RCSCharts
 (function (global) {
-  function listAllNames() {
-    return Object.keys(global.RCS || {}).filter(function (n) { return n !== "default"; });
-  }
   function escapeHtml(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
   function showError(target, msg) {
     target.innerHTML = '<div class="err">' + escapeHtml(msg) + '</div>';
   }
+  function transformExample(R, code) {
+    var names = Object.keys(R || {}).filter(function (n) { return n !== "default"; });
+    return (
+      "(function() { var R = arguments[0]; " +
+      "var { " + names.join(", ") + " } = R; " +
+      "return (" + code + "); " +
+      "})"
+    );
+  }
   function runExample(code, targetId) {
     var target = document.getElementById(targetId || "preview");
     if (!target) return;
     if (!global.RCS) return showError(target, "window.RCS not loaded");
     if (!global.Babel) return showError(target, "Babel standalone not loaded");
-    var names = listAllNames();
-    var wrapped =
-      "(function() { var RCS = window.RCS; " +
-      "var { " + names.join(", ") + " } = RCS; " +
-      "return (" + code + "); " +
-      "})()";
-    var transformed;
-    try {
-      transformed = global.Babel.transform(wrapped, { presets: ["env", "react"] }).code;
-    } catch (e) { return showError(target, "Compile error: " + (e && e.message || e)); }
-    var result;
-    try { result = (0, eval)(transformed); }
+    var wrapped = transformExample(global.RCS, code);
+    var transformed, factory, result;
+    try { transformed = global.Babel.transform(wrapped, { presets: ["env", "react"] }).code; }
+    catch (e) { return showError(target, "Compile error: " + (e && e.message || e)); }
+    try { factory = (0, eval)(transformed); result = factory(global.RCS); }
     catch (e) { return showError(target, "Runtime error: " + (e && e.message || e)); }
     try {
       var R = global.RCS;
@@ -709,7 +671,28 @@ function renderRunner() {
       root.render(R.React.createElement(R.ThemeProvider, { mode: "dark" }, result));
     } catch (e) { showError(target, "Render error: " + (e && e.message || e)); }
   }
+  function runChartExample(code, targetId) {
+    var target = document.getElementById(targetId || "preview");
+    if (!target) return;
+    if (!global.RCSCharts) return showError(target, "window.RCSCharts not loaded");
+    if (!global.Babel) return showError(target, "Babel standalone not loaded");
+    var wrapped = transformExample(global.RCSCharts, code);
+    var transformed, factory, result;
+    try { transformed = global.Babel.transform(wrapped, { presets: ["env", "react"] }).code; }
+    catch (e) { return showError(target, "Compile error: " + (e && e.message || e)); }
+    try { factory = (0, eval)(transformed); result = factory(global.RCSCharts); }
+    catch (e) { return showError(target, "Runtime error: " + (e && e.message || e)); }
+    try {
+      var R = global.RCSCharts;
+      target.innerHTML = "";
+      var mount = document.createElement("div");
+      target.appendChild(mount);
+      var root = R.createRoot(mount);
+      root.render(result);
+    } catch (e) { showError(target, "Render error: " + (e && e.message || e)); }
+  }
   global.runExample = runExample;
+  global.runChartExample = runChartExample;
 })(typeof window !== "undefined" ? window : globalThis);
 `;
 }
@@ -759,12 +742,17 @@ function renderRootIndex() {
 
   <section class="section">
     <h2>Start here</h2>
-    <p class="blurb">Three places to begin, depending on what you need.</p>
+    <p class="blurb">Four places to begin, depending on what you need.</p>
     <div class="grid lg">
       <a class="card" href="docs/">
         <div class="kind">/docs/</div>
         <div class="name">Component reference</div>
         <div class="desc">Live previews, props tables, related types, and source links for every export.</div>
+      </a>
+      <a class="card" href="docs/foundations/">
+        <div class="kind">/docs/foundations/</div>
+        <div class="name">Foundations</div>
+        <div class="desc">Design tokens — color, typography, spacing, radii, shadows, motion — read live from the stylesheet.</div>
       </a>
       <a class="card" href="docs/playground/">
         <div class="kind">/docs/playground/</div>
@@ -779,22 +767,7 @@ function renderRootIndex() {
     </div>
   </section>
 
-  <section class="section">
-    <h2>Spec</h2>
-    <p class="blurb">Static visual references with hex annotations, used to align design and engineering.</p>
-    <div class="grid">
-      <a class="card" href="preview/">
-        <div class="kind">/preview/</div>
-        <div class="name">Brand spec cards</div>
-        <div class="desc">Colors, typography, spacing, motion, and per-component states.</div>
-      </a>
-      <a class="card" href="preview/responsive-check.html">
-        <div class="kind">/preview/responsive-check/</div>
-        <div class="name">Responsive check</div>
-        <div class="desc">Load any spec card inside an iPhone, iPad, Galaxy, or desktop frame.</div>
-      </a>
-    </div>
-  </section>
+
 </main>`;
   return htmlShell({ title: `${pkg.name} — design system`, depth: 0, active: "home", body });
 }
@@ -908,34 +881,6 @@ function renderAppsIndex() {
   return htmlShell({ title: `Sample apps — ${pkg.name}`, depth: 1, active: "apps", body });
 }
 
-function renderBrandIndex(previewFiles) {
-  const cards = previewFiles
-    .filter((f) => f.endsWith(".html") && f !== "index.html")
-    .sort()
-    .map((f) => {
-      const base = f.replace(/\.html$/, "");
-      const group = base.split("-")[0];
-      const friendly = base.replace(/-/g, " ").replace(/\b./g, (c) => c.toUpperCase()).replace("Components ", "").replace("Brand ", "").replace("Type ", "").replace("Spacing ", "").replace("Colors ", "");
-      return `<a class="card" href="${escapeHtml(f)}"><div class="kind">${escapeHtml(group)}</div><div class="name">${escapeHtml(friendly)}</div><div class="meta">${escapeHtml(base)}</div></a>`;
-    })
-    .join("");
-  const body = `<main class="page-wrap">
-  <p class="eyebrow">Spec cards</p>
-  <h1 class="page-h1">Brand & component spec.</h1>
-  <p class="lede">
-    Static visual references with hex annotations and full state coverage. Each card is a self-contained HTML file using
-    design tokens from <code>colors_and_type.css</code> — no React, no JavaScript. Use them to align design intent and
-    QA renders.
-  </p>
-  <div class="grid">${cards}</div>
-  <p style="margin-top: 32px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-3);">
-    Want to test a card on different devices? Open the
-    <a href="responsive-check.html" style="color: var(--accent);">responsive checker</a>.
-  </p>
-</main>`;
-  return htmlShell({ title: `Spec cards — ${pkg.name}`, depth: 1, active: "spec", body });
-}
-
 function renderDocsIndex() {
   const counts = {
     components: ALL_NAMES.filter((n) => !HOOKS.has(n)).length,
@@ -980,12 +925,27 @@ function renderDocsIndex() {
     <span class="install-prefix">$</span>
     <span>npm install ${escapeHtml(pkg.name)}</span>
   </div>
+  <section class="section">
+    <h2>Foundations</h2>
+    <p class="blurb">Start with the design tokens — colors, typography, spacing, radii, shadows, motion. Live values, theme-aware.</p>
+    <div class="grid">
+      <a class="card" href="foundations/">
+        <div class="kind">/docs/foundations/</div>
+        <div class="name">Design tokens</div>
+        <div class="meta">${tokenTypeAliases.length} token type${tokenTypeAliases.length === 1 ? "" : "s"}</div>
+      </a>
+    </div>
+  </section>
   ${cats}
 </main>`;
   return htmlShell({ title: `Components — ${pkg.name}`, depth: 1, active: "components", body });
 }
 
 function renderSidebar(activeName) {
+  const foundationsBlock = `<li class="cat">
+      <a class="cat-label" href="../foundations/">Foundations</a>
+      <ul><li><a href="../foundations/">Design tokens</a></li></ul>
+    </li>`;
   const blocks = DOCS_CATEGORIES.map((cat) => {
     const items = exportsByCategory.get(cat.id);
     if (!items.length) return "";
@@ -994,7 +954,7 @@ function renderSidebar(activeName) {
       <ul>${items.map((n) => `<li><a class="${n === activeName ? "active" : ""}" href="../${n}/">${escapeHtml(n)}</a></li>`).join("")}</ul>
     </li>`;
   }).join("");
-  return `<ul class="nav">${blocks}</ul>`;
+  return `<ul class="nav">${foundationsBlock}${blocks}</ul>`;
 }
 
 function renderPropsTable(iface) {
@@ -1036,11 +996,7 @@ function renderComponentPage(name) {
 
   const demosHtml = demos.map((d, i) => `
     <article class="demo" id="demo-${i}">
-      ${chart
-        ? `<div class="demo-render demo-render--static" id="demo-render-${i}">
-            <div class="demo-static-note">Live preview not available — charts load peer deps outside the bundle. See <a href="../../preview/components-charts-${chartExports.get(name)?.toLowerCase()}.html">spec card</a> or copy the code.</div>
-          </div>`
-        : `<div class="demo-render" id="demo-render-${i}"></div>`}
+      <div class="demo-render" id="demo-render-${i}"></div>
       <div class="demo-meta">
         <div class="demo-meta-text">
           <h3>${escapeHtml(d.title)}</h3>
@@ -1051,10 +1007,10 @@ function renderComponentPage(name) {
           ${chart
             ? ""
             : `<a class="demo-action" href="../playground/?code=${encodeForUrl(d.code)}" target="_blank" rel="noopener" title="Open in playground">↗ Playground</a>`}
-          <button type="button" class="demo-action demo-toggle" data-target="${i}" aria-expanded="${chart ? "true" : "false"}">‹/› ${chart ? "Hide" : "Show"} code</button>
+          <button type="button" class="demo-action demo-toggle" data-target="${i}" aria-expanded="false">‹/› Show code</button>
         </div>
       </div>
-      <div class="demo-code" id="demo-code-${i}"${chart ? "" : " hidden"}>
+      <div class="demo-code" id="demo-code-${i}" hidden>
         <pre><code class="lang-tsx">${escapeHtml(d.code)}</code></pre>
       </div>
     </article>
@@ -1109,24 +1065,27 @@ function renderComponentPage(name) {
 
   const head = `
   <link rel="stylesheet" href="../../dist/styles.css">
-  <link rel="stylesheet" href="../docs.css">`;
+  <link rel="stylesheet" href="../docs.css">${chart ? `
+  <link rel="stylesheet" href="../bundle/rcs-charts.iife.css">` : ""}`;
 
   // Build a script that runs each demo and wires up copy / toggle / sidebar drawer.
-  // Charts skip the live runner — they're not in the IIFE bundle.
-  const runCalls = chart
-    ? ""
-    : demos.map((d, i) => `runExample(${JSON.stringify(d.code)}, "demo-render-${i}");`).join("\n      ");
+  // The runner functions themselves verify their bundle is loaded (window.RCS
+  // for runExample, window.RCSCharts for runChartExample) and surface the
+  // failure inline, so we only need to guard against runner.js itself failing.
+  const runFn = chart ? "runChartExample" : "runExample";
+  const runCalls = demos.map((d, i) => `${runFn}(${JSON.stringify(d.code)}, "demo-render-${i}");`).join("\n      ");
   const codeJson = JSON.stringify(demos.map((d) => d.code));
 
   const tail = `
-  <script src="../bundle/rcs.iife.js"></script>
+  <script src="../bundle/rcs.iife.js"></script>${chart ? `
+  <script src="../bundle/rcs-charts.iife.js"></script>` : ""}
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
   <script src="../runner.js"></script>
   <script>
     (function () {
       var DEMO_CODES = ${codeJson};
       function runAll() {
-        if (typeof runExample !== 'function') {
+        if (typeof ${runFn} !== 'function') {
           document.querySelectorAll('.demo-render').forEach(function (el) {
             el.innerHTML = '<div class="err">runner.js failed to load</div>';
           });
@@ -1284,13 +1243,333 @@ function renderPlaygroundPage() {
   return htmlShell({ title: `Playground — ${pkg.name}`, depth: 2, active: "playground", body, head, tail });
 }
 
+// ─── Foundations page (live design tokens) ───────────────────────────
+// Reads tokens.ts and colors_and_type.css so the page mirrors the
+// system 1:1; swatch background-colors are read via getComputedStyle
+// so we never duplicate hex literals in the generator.
+function renderFoundationsPage() {
+  const tokenList = (...names) => names.map((n) => ({ name: n }));
+  const brandReds = tokenList(
+    "--brand-red-50",  "--brand-red-100", "--brand-red-200", "--brand-red-300", "--brand-red-400",
+    "--brand-red-500", "--brand-red-600", "--brand-red-700", "--brand-red-800", "--brand-red-900",
+  );
+  const brandGrays = tokenList(
+    "--brand-gray-50",  "--brand-gray-100", "--brand-gray-200", "--brand-gray-300", "--brand-gray-400",
+    "--brand-gray-500", "--brand-gray-600", "--brand-gray-700", "--brand-gray-800", "--brand-gray-900",
+  );
+  const semantic = [
+    { label: "accent",       css: "--accent" },
+    { label: "accent-hover", css: "--accent-hover" },
+    { label: "accent-press", css: "--accent-press" },
+    { label: "accent-soft",  css: "--accent-soft" },
+    { label: "accent-fg",    css: "--accent-fg" },
+  ];
+  const surfaces = [
+    { label: "bg-0", css: "--bg-0" }, { label: "bg-1", css: "--bg-1" },
+    { label: "bg-2", css: "--bg-2" }, { label: "bg-3", css: "--bg-3" },
+    { label: "fg-1", css: "--fg-1" }, { label: "fg-2", css: "--fg-2" },
+    { label: "fg-3", css: "--fg-3" }, { label: "fg-4", css: "--fg-4" },
+    { label: "border-1", css: "--border-1" }, { label: "border-2", css: "--border-2" }, { label: "border-3", css: "--border-3" },
+  ];
+  const typeScale = [
+    { label: "display", fs: "--fs-display", lh: "--lh-display", ls: "--ls-display", weight: 600, sample: "Strongly typed UI." },
+    { label: "h1",      fs: "--fs-h1",      lh: "--lh-h1",      ls: "--ls-h1",      weight: 600, sample: "Component headline" },
+    { label: "h2",      fs: "--fs-h2",      lh: "--lh-h2",      ls: "--ls-h2",      weight: 600, sample: "Section heading" },
+    { label: "h3",      fs: "--fs-h3",      lh: "--lh-h3",      ls: "--ls-h3",      weight: 600, sample: "Subsection title" },
+    { label: "h4",      fs: "--fs-h4",      lh: "--lh-h4",      ls: "--ls-h4",      weight: 600, sample: "Inline heading" },
+    { label: "body",    fs: "--fs-body",    lh: "--lh-body",    ls: "--ls-body",    weight: 400, sample: "Body copy at the default reading scale — comfortable for sustained text." },
+    { label: "small",   fs: "--fs-small",   lh: "--lh-small",   ls: "--ls-small",   weight: 400, sample: "Compact metadata, secondary captions, small footers." },
+    { label: "micro",   fs: "--fs-micro",   lh: "--lh-micro",   ls: "--ls-micro",   weight: 500, sample: "MICRO LABEL · MONO · UPPERCASE", mono: true, upper: true },
+    { label: "code",    fs: "--fs-code",    lh: "--lh-code",    ls: "0",            weight: 400, sample: "const cx = (...c) => c.filter(Boolean).join(' ')", mono: true },
+  ];
+  const fontFamilies = [
+    { label: "display", css: "--font-display", sample: "Bricolage Grotesque" },
+    { label: "sans",    css: "--font-sans",    sample: "The quick brown fox jumps over the lazy dog. 0123456789" },
+    { label: "mono",    css: "--font-mono",    sample: "function ƒ(x: T): U { return x as unknown as U; }" },
+  ];
+  const spaces = [
+    "--space-1", "--space-1\\.5", "--space-2", "--space-2\\.5", "--space-3", "--space-4",
+    "--space-5", "--space-6", "--space-8", "--space-10", "--space-12", "--space-16", "--space-20", "--space-24",
+  ];
+  const radii = ["--radius-xs", "--radius-sm", "--radius-md", "--radius-lg", "--radius-xl", "--radius-2xl", "--radius-full"];
+  const shadows = ["--shadow-xs", "--shadow-sm", "--shadow-md", "--shadow-lg"];
+  const motion = [
+    { dur: "--dur-instant", ease: "--ease-out-quart", label: "instant · ease-out-quart" },
+    { dur: "--dur-fast",    ease: "--ease-out-expo",  label: "fast · ease-out-expo" },
+    { dur: "--dur-base",    ease: "--ease-in-out",    label: "base · ease-in-out" },
+    { dur: "--dur-slow",    ease: "--ease-spring",    label: "slow · ease-spring" },
+  ];
+
+  const swatchGrid = (group) => `<div class="fnd-swatch-grid">${group.map((s) => {
+    const css = s.css || s.name;
+    return `<div class="fnd-swatch" data-css="${escapeHtml(css)}">
+      <div class="fnd-swatch-chip" style="background:var(${css.replace(/\\\./g, ".")})"></div>
+      <div class="fnd-swatch-meta">
+        <code class="fnd-swatch-name">${escapeHtml(s.label || css.replace(/^--/, ""))}</code>
+        <code class="fnd-swatch-hex" data-hex></code>
+      </div>
+    </div>`;
+  }).join("")}</div>`;
+
+  const typeRows = typeScale.map((t) => `<div class="fnd-type-row">
+    <div class="fnd-type-meta">
+      <code>${escapeHtml(t.label)}</code>
+      <span class="fnd-type-meta-detail" data-fs="${t.fs}" data-lh="${t.lh}" data-ls="${t.ls}"></span>
+    </div>
+    <div class="fnd-type-sample" style="font-family: var(${t.mono ? "--font-mono" : (t.label === "display" ? "--font-display" : "--font-sans")}); font-size: var(${t.fs}); line-height: var(${t.lh}); letter-spacing: var(${t.ls}); font-weight: ${t.weight}; ${t.upper ? "text-transform:uppercase;" : ""}">${escapeHtml(t.sample)}</div>
+  </div>`).join("");
+
+  const fontRows = fontFamilies.map((f) => `<div class="fnd-font-row">
+    <div class="fnd-type-meta"><code>${escapeHtml(f.label)}</code><span class="fnd-type-meta-detail" data-css="${f.css}"></span></div>
+    <div class="fnd-font-sample" style="font-family: var(${f.css});">${escapeHtml(f.sample)}</div>
+  </div>`).join("");
+
+  const spaceRows = spaces.map((s) => {
+    const escaped = s.replace(/\\\./g, ".");
+    return `<div class="fnd-space-row">
+      <code class="fnd-space-name">${escapeHtml(s.replace(/\\/g, ""))}</code>
+      <div class="fnd-space-bar" style="width: var(${escaped});"></div>
+      <code class="fnd-space-value" data-css="${escaped}"></code>
+    </div>`;
+  }).join("");
+
+  const radiiRows = radii.map((r) => `<div class="fnd-radius-row">
+    <div class="fnd-radius-box" style="border-radius: var(${r});"></div>
+    <code>${escapeHtml(r.replace(/^--/, ""))}</code>
+    <code class="fnd-radius-value" data-css="${r}"></code>
+  </div>`).join("");
+
+  const shadowRows = shadows.map((s) => `<div class="fnd-shadow-row">
+    <div class="fnd-shadow-box" style="box-shadow: var(${s});"></div>
+    <code>${escapeHtml(s.replace(/^--/, ""))}</code>
+  </div>`).join("");
+
+  const motionRows = motion.map((m, i) => `<div class="fnd-motion-row">
+    <div class="fnd-motion-box" data-dur="${m.dur}" data-ease="${m.ease}" data-i="${i}"></div>
+    <code>${escapeHtml(m.label)}</code>
+    <button type="button" class="demo-action fnd-motion-trigger" data-i="${i}">▷ Replay</button>
+  </div>`).join("");
+
+  const tokenAliasRows = tokenTypeAliases.map((t) => `<tr>
+    <td><code>${escapeHtml(t.name)}</code></td>
+    <td><code>${escapeHtml(t.value.length > 96 ? t.value.slice(0, 93) + "…" : t.value)}</code></td>
+  </tr>`).join("");
+
+  const body = `<main class="page-wrap fnd-page">
+  <p class="eyebrow">Foundations</p>
+  <h1 class="page-h1">Design tokens.</h1>
+  <p class="lede">
+    Every token in the system, read live from <code>colors_and_type.css</code> via CSS custom properties.
+    Hex values resolve at runtime, so what you see here matches what your app gets when you import
+    <code>${escapeHtml(pkg.name)}/styles.css</code>. Switch the global theme toggle to see surface tokens flip.
+  </p>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Color · Brand red</h2>
+    <p class="fnd-blurb">Signal Red is the only accent. The full red ramp is reserved for charts and edge cases — production UI should reach for <code>--accent</code>, <code>--accent-hover</code>, <code>--accent-press</code>, <code>--accent-soft</code>.</p>
+    ${swatchGrid(brandReds)}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Color · Brand gray</h2>
+    <p class="fnd-blurb">Cod Gray ramp drives every neutral surface and ink shade. Pulls from <code>--bg-*</code> and <code>--fg-*</code> at runtime.</p>
+    ${swatchGrid(brandGrays)}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Accent · semantic</h2>
+    <p class="fnd-blurb">Action color, hover/press states, and the soft tint behind selected items.</p>
+    ${swatchGrid(semantic)}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Surface &amp; ink</h2>
+    <p class="fnd-blurb">Theme-aware tokens — these flip when <code>data-theme</code> swaps. The chips below resolve through <code>:root</code>, <code>[data-theme="light"]</code>, and <code>[data-theme="dark"]</code> blocks.</p>
+    ${swatchGrid(surfaces)}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Typography · families</h2>
+    <p class="fnd-blurb">Three families. Display for impact, sans for body, mono for code &amp; micro labels.</p>
+    ${fontRows}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Typography · scale</h2>
+    <p class="fnd-blurb">Each row uses its corresponding <code>--fs-*</code> + <code>--lh-*</code> + <code>--ls-*</code> custom properties.</p>
+    ${typeRows}
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Spacing</h2>
+    <p class="fnd-blurb">A 4px-stepped scale plus half-steps where the grain of an interface needs them. Bars below render at the literal pixel value.</p>
+    <div class="fnd-space-list">${spaceRows}</div>
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Radii</h2>
+    <p class="fnd-blurb">Tight by default. <code>radius-sm</code> (4px) is the system default — Linear-style.</p>
+    <div class="fnd-radius-grid">${radiiRows}</div>
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Shadows</h2>
+    <p class="fnd-blurb">Two-layer shadows for depth without haze. Darker, smaller layer for the edge; broader, softer layer for the diffuse halo.</p>
+    <div class="fnd-shadow-grid">${shadowRows}</div>
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">Motion</h2>
+    <p class="fnd-blurb">Each box loops through translate + opacity using its labeled duration and easing. Click ▷ Replay to trigger.</p>
+    <div class="fnd-motion-list">${motionRows}</div>
+  </section>
+
+  <section class="fnd-section">
+    <h2 class="fnd-h2">TypeScript types</h2>
+    <p class="fnd-blurb">Imported from <code>${escapeHtml(pkg.name)}/tokens</code>. Use these to constrain props at compile time.</p>
+    <table class="props"><thead><tr><th>Type</th><th>Value</th></tr></thead><tbody>${tokenAliasRows}</tbody></table>
+  </section>
+</main>
+<style>
+  .fnd-page { max-width: 1080px; }
+  .fnd-section { margin: 0 0 56px; }
+  .fnd-h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.014em; margin: 0 0 6px; font-family: var(--font-sans); color: var(--fg-1); }
+  .fnd-blurb { color: var(--fg-2); font-size: 13.5px; line-height: 1.55; margin: 0 0 18px; max-width: 64ch; }
+
+  /* Swatch grid */
+  .fnd-swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1px; background: var(--border-1); border: 1px solid var(--border-1); border-radius: 4px; overflow: hidden; }
+  .fnd-swatch { background: var(--bg-1); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .fnd-swatch-chip { width: 100%; height: 56px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(28,28,28,0.08); }
+  .fnd-swatch-meta { display: flex; flex-direction: column; gap: 2px; }
+  .fnd-swatch-name { font-family: var(--font-mono); font-size: 11px; color: var(--fg-1); }
+  .fnd-swatch-hex { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); letter-spacing: 0.04em; min-height: 14px; }
+
+  /* Type rows */
+  .fnd-type-row, .fnd-font-row { display: grid; grid-template-columns: 160px 1fr; gap: 24px; padding: 14px 0; border-bottom: 1px solid var(--border-1); align-items: baseline; }
+  .fnd-type-row:last-child, .fnd-font-row:last-child { border-bottom: none; }
+  .fnd-type-meta { display: flex; flex-direction: column; gap: 4px; }
+  .fnd-type-meta code { font-family: var(--font-mono); font-size: 11px; color: var(--fg-1); }
+  .fnd-type-meta-detail { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3); letter-spacing: 0.04em; }
+  .fnd-type-sample { color: var(--fg-1); }
+  .fnd-font-sample { color: var(--fg-1); font-size: 18px; line-height: 1.55; }
+  @media (max-width: 720px) {
+    .fnd-type-row, .fnd-font-row { grid-template-columns: 1fr; gap: 8px; }
+    .fnd-font-sample { font-size: 15px; }
+  }
+
+  /* Spacing scale */
+  .fnd-space-list { display: flex; flex-direction: column; gap: 4px; }
+  .fnd-space-row { display: grid; grid-template-columns: 80px 1fr 60px; gap: 16px; align-items: center; padding: 6px 0; }
+  .fnd-space-name { font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); }
+  .fnd-space-bar { height: 18px; background: var(--accent); border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+  .fnd-space-value { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); text-align: right; }
+
+  /* Radii */
+  .fnd-radius-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+  .fnd-radius-row { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px; border: 1px solid var(--border-1); border-radius: 4px; background: var(--bg-1); }
+  .fnd-radius-box { width: 100%; height: 64px; background: var(--bg-2); border: 1px solid var(--border-2); }
+  .fnd-radius-row code { font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); }
+  .fnd-radius-value { color: var(--fg-3) !important; }
+
+  /* Shadows */
+  .fnd-shadow-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px; padding: 16px 0; }
+  .fnd-shadow-row { display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 24px 0 12px; }
+  .fnd-shadow-box { width: 80%; height: 64px; background: var(--bg-1); border-radius: 4px; }
+  .fnd-shadow-row code { font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); }
+
+  /* Motion */
+  .fnd-motion-list { display: flex; flex-direction: column; gap: 10px; }
+  .fnd-motion-row { display: grid; grid-template-columns: 60px 1fr 100px; gap: 16px; align-items: center; padding: 12px 16px; border: 1px solid var(--border-1); border-radius: 4px; background: var(--bg-1); }
+  .fnd-motion-box {
+    width: 32px; height: 32px; background: var(--accent); border-radius: 4px;
+    transform: translateX(0); opacity: 1;
+  }
+  .fnd-motion-box.run { animation: fnd-motion-run var(--dur, 220ms) var(--ease, ease) forwards; }
+  @keyframes fnd-motion-run {
+    0% { transform: translateX(0); opacity: 0.3; }
+    50% { transform: translateX(180px); opacity: 1; }
+    100% { transform: translateX(0); opacity: 0.3; }
+  }
+  .fnd-motion-row code { font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); }
+  .fnd-motion-trigger { width: 100%; }
+
+  table.props { margin: 0; }
+</style>`;
+
+  const head = `<link rel="stylesheet" href="../../dist/styles.css">
+  <link rel="stylesheet" href="../docs.css">`;
+
+  const tail = `<script>
+  (function () {
+    var root = document.documentElement;
+    function refresh() {
+      var cs = getComputedStyle(root);
+      // Swatch hex values
+      document.querySelectorAll('.fnd-swatch').forEach(function (el) {
+        var css = el.getAttribute('data-css');
+        var v = cs.getPropertyValue(css.replace(/\\\\./g, '.')).trim();
+        var hex = el.querySelector('[data-hex]');
+        if (hex) hex.textContent = v;
+      });
+      // Type meta text
+      document.querySelectorAll('.fnd-type-meta-detail').forEach(function (el) {
+        if (el.dataset.fs) {
+          var fs = cs.getPropertyValue(el.dataset.fs).trim();
+          var lh = cs.getPropertyValue(el.dataset.lh).trim();
+          var ls = cs.getPropertyValue(el.dataset.ls).trim();
+          el.textContent = fs + ' / ' + lh + (ls && ls !== '0' ? ' / ' + ls : '');
+        } else if (el.dataset.css) {
+          var fam = cs.getPropertyValue(el.dataset.css).trim();
+          var primary = fam.split(',')[0].replace(/['"]/g, '').trim();
+          el.textContent = primary;
+        }
+      });
+      // Space values
+      document.querySelectorAll('.fnd-space-value').forEach(function (el) {
+        var v = cs.getPropertyValue(el.getAttribute('data-css')).trim();
+        el.textContent = v;
+      });
+      // Radius values
+      document.querySelectorAll('.fnd-radius-value').forEach(function (el) {
+        var v = cs.getPropertyValue(el.getAttribute('data-css')).trim();
+        el.textContent = v;
+      });
+    }
+    refresh();
+    // Re-resolve on theme switch
+    var obs = new MutationObserver(refresh);
+    obs.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Motion replay buttons
+    function play(el) {
+      var dur = getComputedStyle(root).getPropertyValue(el.dataset.dur).trim();
+      var ease = getComputedStyle(root).getPropertyValue(el.dataset.ease).trim();
+      el.style.setProperty('--dur', dur);
+      el.style.setProperty('--ease', ease);
+      el.classList.remove('run');
+      void el.offsetWidth; // restart animation
+      el.classList.add('run');
+    }
+    document.querySelectorAll('.fnd-motion-box').forEach(play);
+    document.querySelectorAll('.fnd-motion-trigger').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var box = document.querySelector('.fnd-motion-box[data-i="' + btn.dataset.i + '"]');
+        if (box) play(box);
+      });
+    });
+  })();
+</script>`;
+
+  return htmlShell({ title: `Foundations — ${pkg.name}`, depth: 2, active: "components", body, head, tail });
+}
+
 // ─── 9. Write all output files ────────────────────────────────────────
 mkdirSync(outDir, { recursive: true });
 mkdirSync(join(outDir, "dist"), { recursive: true });
 mkdirSync(join(outDir, "apps"), { recursive: true });
-mkdirSync(join(outDir, "preview"), { recursive: true });
 mkdirSync(join(outDir, "docs"), { recursive: true });
 mkdirSync(join(outDir, "docs/playground"), { recursive: true });
+mkdirSync(join(outDir, "docs/foundations"), { recursive: true });
 
 writeFileSync(join(outDir, "site.css"), renderSiteCss());
 writeFileSync(join(outDir, "dist/styles.css"), colorsAndTypeCss + "\n" + componentStylesCss);
@@ -1298,18 +1577,11 @@ writeFileSync(join(outDir, "dist/styles.css"), colorsAndTypeCss + "\n" + compone
 writeFileSync(join(outDir, "index.html"), renderRootIndex());
 writeFileSync(join(outDir, "apps/index.html"), renderAppsIndex());
 
-// /preview/index.html — list every preview HTML card we've staged
-let previewFiles = [];
-try {
-  const { readdirSync } = await import("node:fs");
-  previewFiles = readdirSync(join(outDir, "preview")).filter((f) => f.endsWith(".html"));
-} catch { /* preview/ not staged yet — script may run before workflow's cp */ }
-writeFileSync(join(outDir, "preview/index.html"), renderBrandIndex(previewFiles));
-
 writeFileSync(join(outDir, "docs/index.html"), renderDocsIndex());
 writeFileSync(join(outDir, "docs/docs.css"), renderDocsCss());
 writeFileSync(join(outDir, "docs/runner.js"), renderRunner());
 writeFileSync(join(outDir, "docs/playground/index.html"), renderPlaygroundPage());
+writeFileSync(join(outDir, "docs/foundations/index.html"), renderFoundationsPage());
 
 let count = 0;
 for (const name of ALL_NAMES) {
@@ -1320,7 +1592,6 @@ for (const name of ALL_NAMES) {
 }
 
 console.log(`Wrote site to ${outDir}`);
-console.log(`  ${count} component pages (${runtimeExports.size} core + ${chartExports.size} charts), 1 docs index, 1 playground, 1 apps index, 1 brand index, 1 root`);
+console.log(`  ${count} component pages (${runtimeExports.size} core + ${chartExports.size} charts), 1 foundations, 1 docs index, 1 playground, 1 apps index, 1 root`);
 console.log(`  ${runtimeExports.size + chartExports.size} runtime exports across ${DOCS_CATEGORIES.filter((c) => exportsByCategory.get(c.id).length > 0).length} docs categories`);
 console.log(`  ${tokenTypeAliases.length} tokens, ${interfaces.length} interfaces, ${componentTypeAliases.length} type aliases`);
-console.log(`  preview cards listed: ${previewFiles.filter((f) => f !== "index.html").length}`);

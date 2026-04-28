@@ -8,7 +8,7 @@
  *
  * Steps:
  *   1. Recreate <outDir>/
- *   2. Stage colors_and_type.css + assets/ + preview/ + ui_kits/
+ *   2. Stage colors_and_type.css + assets/ + ui_kits/
  *   3. Bundle src → <outDir>/docs/bundle/rcs.iife.js (esbuild IIFE)
  *   4. Run scripts/build-docs.mjs to write per-component pages
  */
@@ -25,7 +25,7 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(join(out, "docs/bundle"), { recursive: true });
 
 cpSync(join(root, "colors_and_type.css"), join(out, "colors_and_type.css"));
-for (const dir of ["assets", "preview", "ui_kits"]) {
+for (const dir of ["assets", "ui_kits"]) {
   const src = join(root, dir);
   if (existsSync(src)) cpSync(src, join(out, dir), { recursive: true });
 }
@@ -48,6 +48,24 @@ const r1 = spawnSync(esbuildBin, [
   '--define:process.env.NODE_ENV="production"',
 ], { stdio: "inherit" });
 if (r1.status !== 0) process.exit(r1.status ?? 1);
+
+// Charts bundle — loaded only by chart docs pages. Heavy WebGL peer deps
+// stay external; chart components fall back to canvas2d / SVG paths.
+const r1b = spawnSync(esbuildBin, [
+  "scripts/bundle-entry-charts.ts",
+  "--bundle",
+  "--format=iife",
+  "--global-name=RCSCharts",
+  `--outfile=${join(out, "docs/bundle/rcs-charts.iife.js")}`,
+  "--target=es2020",
+  "--jsx=automatic",
+  "--minify",
+  '--define:process.env.NODE_ENV="production"',
+  "--external:@deck.gl/core",
+  "--external:@deck.gl/layers",
+  "--external:d3-force",
+], { stdio: "inherit" });
+if (r1b.status !== 0) process.exit(r1b.status ?? 1);
 
 const r2 = spawnSync(process.execPath, ["scripts/build-docs.mjs", out], { stdio: "inherit" });
 if (r2.status !== 0) process.exit(r2.status ?? 1);

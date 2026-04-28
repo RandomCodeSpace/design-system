@@ -1,9 +1,9 @@
 /**
  * Sparkline — minimal smoke test.
- * The chart components live behind the optional "/charts" subpath
- * and depend on optional peer deps; only Sparkline is dependency-free
- * so it's the only chart we test in unit-land. The rest are covered
- * by playwright e2e against rendered preview cards.
+ * Chart components live behind the optional "/charts" subpath and
+ * depend on optional peer deps; Sparkline is dependency-free (pure
+ * SVG) so it's the easiest one to exercise in jsdom. Heavier charts
+ * are covered by playwright e2e against the live docs pages.
  */
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";

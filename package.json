@@ -36,6 +36,10 @@
       "types": "./dist/tokens.d.ts",
       "import": "./dist/tokens.js"
     },
+    "./charts": {
+      "types": "./dist/charts/index.d.ts",
+      "import": "./dist/charts/index.js"
+    },
     "./styles.css": "./dist/styles.css"
   },
   "files": [
@@ -62,7 +66,23 @@
   },
   "peerDependencies": {
     "react": ">=18",
-    "react-dom": ">=18"
+    "react-dom": ">=18",
+    "uplot": "^1.6.0",
+    "d3-hierarchy": "^3.0.0",
+    "d3-force": "^3.0.0",
+    "cytoscape": "^3.30.0",
+    "cytoscape-cose-bilkent": "^4.1.0",
+    "@deck.gl/core": "^9.0.0",
+    "@deck.gl/layers": "^9.0.0"
+  },
+  "peerDependenciesMeta": {
+    "uplot": { "optional": true },
+    "d3-hierarchy": { "optional": true },
+    "d3-force": { "optional": true },
+    "cytoscape": { "optional": true },
+    "cytoscape-cose-bilkent": { "optional": true },
+    "@deck.gl/core": { "optional": true },
+    "@deck.gl/layers": { "optional": true }
   },
   "devDependencies": {
     "@babel/standalone": "^7.29.0",

@@ -1,0 +1,233 @@
+<!doctype html>
+<html data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="stylesheet" href="_card.css?v=6"><title>Charts — ServiceMap</title>
+<style>
+  .chart-frame{background:#FFFFFF;border:1px solid rgba(28,28,28,0.08);border-radius:4px;padding:14px;}
+  .map-wrap{position:relative;width:100%;height:440px;background:#FAFAFA;border:1px solid rgba(28,28,28,0.06);border-radius:3px;overflow:hidden;background-image:radial-gradient(circle at 1px 1px,rgba(28,28,28,0.06) 1px,transparent 0);background-size:18px 18px;}
+  svg.map{position:absolute;inset:0;width:100%;height:100%;}
+
+  /* Edges — directional flow with arrowhead */
+  .edge-line{stroke:#C8C8CC;stroke-width:1;fill:none;transition:stroke 120ms,stroke-width 120ms,opacity 120ms;}
+  .edge-line.failing{stroke:#E60000;stroke-width:1.5;}
+  .edge-arrow{fill:#C8C8CC;transition:fill 120ms,opacity 120ms;}
+  .edge-arrow.failing{fill:#E60000;}
+  .edge-label{font-family:var(--font-mono);font-size:9px;fill:#7A7A7E;opacity:0;pointer-events:none;transition:opacity 120ms,fill 120ms;}
+
+  /* Nodes — labels below */
+  .node{cursor:pointer;transition:opacity 120ms;}
+  .node circle{fill:#9A9AA0;stroke:#FFFFFF;stroke-width:1;transition:fill 120ms,stroke 120ms,stroke-width 120ms;}
+  .node[data-status="healthy"]  circle{fill:#1F9E5C;}
+  .node[data-status="degraded"] circle{fill:#D98E2B;}
+  .node[data-status="failing"]  circle{fill:#E60000;}
+  .node text{font-family:var(--font-sans);font-size:11px;font-weight:400;fill:#7A7A7E;text-anchor:middle;dominant-baseline:hanging;pointer-events:none;transition:fill 120ms,font-weight 120ms;}
+
+  /* Hover state — driven by JS toggling .focused on the wrap */
+  .map-wrap.focused .edge-line,
+  .map-wrap.focused .edge-arrow{opacity:0.18;}
+  .map-wrap.focused .node{opacity:0.35;}
+  .map-wrap.focused .node text{fill:#9A9AA0;}
+  .map-wrap.focused .edge.lit .edge-line{opacity:1;stroke:#FF6F2C;stroke-width:2;}
+  .map-wrap.focused .edge.lit .edge-arrow{opacity:1;fill:#FF6F2C;}
+  .map-wrap.focused .edge.lit .edge-label{opacity:1;fill:#1C1C1C;}
+  .map-wrap.focused .node.lit{opacity:1;}
+  .map-wrap.focused .node.lit text{fill:#1C1C1C;font-weight:500;}
+  .map-wrap.focused .node.lit.focus circle{stroke:#FF6F2C;stroke-width:2;}
+
+  .head-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .engine-pill{font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#5A5A5A;background:#F5F5F5;border:1px solid rgba(28,28,28,0.08);border-radius:3px;padding:2px 6px;}
+  .stats{display:flex;gap:18px;font-family:var(--font-mono);font-size:11px;color:#5A5A5A;margin-top:10px;flex-wrap:wrap;}
+  .stats strong{color:#1C1C1C;font-weight:600;font-variant-numeric:tabular-nums;}
+  .legend{display:flex;gap:14px;margin-top:8px;font-family:var(--font-mono);font-size:11px;color:#5A5A5A;flex-wrap:wrap;}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .scale-key{display:flex;align-items:center;gap:6px;}
+  .scale-key i{display:inline-block;background:#9A9AA0;border-radius:50%;}
+  .hint{font-family:var(--font-mono);font-size:10px;color:#7A7A7E;margin-top:4px;}
+</style></head>
+<body>
+<div class="card" style="background:#F5F5F5;">
+  <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#5A5A5A;">Charts · ServiceMap · directed flow · labels reveal on focus</div>
+
+  <div class="chart-frame">
+    <div class="head-row">
+      <div>
+        <div style="font:600 13px var(--font-sans);color:#1C1C1C;">Production topology</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:#5A5A5A;">cytoscape · cose-bilkent · webgl handoff at 200+ nodes</div>
+      </div>
+      <span class="engine-pill">canvas</span>
+    </div>
+
+    <div class="map-wrap" id="mapWrap">
+      <svg class="map" viewBox="0 0 800 440" preserveAspectRatio="none">
+        <defs>
+          <marker id="arr"     markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+            <path class="edge-arrow" d="M0,0 L9,5 L0,10 Z"/>
+          </marker>
+          <marker id="arr-bad" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+            <path class="edge-arrow failing" d="M0,0 L9,5 L0,10 Z"/>
+          </marker>
+        </defs>
+
+        <!-- Edges first so nodes render on top.
+             Each edge is a <g> so the line, arrow and label can be hit/styled together.
+             data-from / data-to drive direction; the arrow marker sits at the target end.
+             Endpoints stop ~10px short of the target node so the arrowhead reads cleanly. -->
+        <g id="edges">
+          <g class="edge" data-from="lb"  data-to="gw">
+            <line class="edge-line" x1="100" y1="220" x2="232" y2="125" marker-end="url(#arr)"/>
+            <text class="edge-label" x="166" y="167">http</text>
+          </g>
+          <g class="edge" data-from="lb"  data-to="au">
+            <line class="edge-line" x1="100" y1="220" x2="231" y2="220" marker-end="url(#arr)"/>
+            <text class="edge-label" x="165" y="215">http</text>
+          </g>
+          <g class="edge" data-from="lb"  data-to="wh">
+            <line class="edge-line" x1="100" y1="220" x2="232" y2="315" marker-end="url(#arr)"/>
+            <text class="edge-label" x="166" y="273">http</text>
+          </g>
+          <g class="edge" data-from="gw"  data-to="us">
+            <line class="edge-line" x1="240" y1="120" x2="372" y2="80" marker-end="url(#arr)"/>
+            <text class="edge-label" x="306" y="95">grpc</text>
+          </g>
+          <g class="edge" data-from="gw"  data-to="bl">
+            <line class="edge-line" x1="240" y1="120" x2="372" y2="180" marker-end="url(#arr)"/>
+            <text class="edge-label" x="306" y="145">grpc</text>
+          </g>
+          <g class="edge failing" data-from="au" data-to="bl">
+            <line class="edge-line failing" x1="240" y1="220" x2="372" y2="190" marker-end="url(#arr-bad)"/>
+            <text class="edge-label" x="306" y="200">grpc · 5xx</text>
+          </g>
+          <g class="edge" data-from="au"  data-to="nt">
+            <line class="edge-line" x1="240" y1="220" x2="372" y2="250" marker-end="url(#arr)"/>
+            <text class="edge-label" x="306" y="230">amqp</text>
+          </g>
+          <g class="edge" data-from="wh"  data-to="sc">
+            <line class="edge-line" x1="240" y1="320" x2="372" y2="330" marker-end="url(#arr)"/>
+            <text class="edge-label" x="306" y="320">amqp</text>
+          </g>
+          <g class="edge" data-from="us"  data-to="pg">
+            <line class="edge-line" x1="380" y1="80"  x2="532" y2="80" marker-end="url(#arr)"/>
+            <text class="edge-label" x="456" y="75">sql</text>
+          </g>
+          <g class="edge" data-from="bl"  data-to="rd">
+            <line class="edge-line" x1="380" y1="180" x2="532" y2="180" marker-end="url(#arr)"/>
+            <text class="edge-label" x="456" y="175">cache</text>
+          </g>
+          <g class="edge" data-from="nt"  data-to="qu">
+            <line class="edge-line" x1="380" y1="250" x2="532" y2="250" marker-end="url(#arr)"/>
+            <text class="edge-label" x="456" y="245">amqp</text>
+          </g>
+          <g class="edge" data-from="sc"  data-to="sr">
+            <line class="edge-line" x1="380" y1="330" x2="532" y2="330" marker-end="url(#arr)"/>
+            <text class="edge-label" x="456" y="325">http</text>
+          </g>
+          <g class="edge" data-from="pg"  data-to="s3">
+            <line class="edge-line" x1="540" y1="85"  x2="672" y2="140" marker-end="url(#arr)"/>
+            <text class="edge-label" x="606" y="105">backup</text>
+          </g>
+          <g class="edge" data-from="rd"  data-to="s3">
+            <line class="edge-line" x1="540" y1="180" x2="672" y2="148" marker-end="url(#arr)"/>
+            <text class="edge-label" x="606" y="159">snapshot</text>
+          </g>
+          <g class="edge" data-from="qu"  data-to="an">
+            <line class="edge-line" x1="540" y1="255" x2="672" y2="285" marker-end="url(#arr)"/>
+            <text class="edge-label" x="606" y="265">events</text>
+          </g>
+          <g class="edge" data-from="sr"  data-to="an">
+            <line class="edge-line" x1="540" y1="330" x2="672" y2="295" marker-end="url(#arr)"/>
+            <text class="edge-label" x="606" y="318">events</text>
+          </g>
+        </g>
+
+        <!--
+          Dot radii reflect computed degree using sqrt scaling:
+          deg 1 → r=4, deg 2 → r=6, deg 3 → r=8, deg 4 → r=10
+          Labels sit BELOW each dot (dominant-baseline:hanging, y = r + 4).
+        -->
+        <g id="nodes">
+          <g class="node" data-id="lb" data-status="healthy"  transform="translate(100,220)"><circle r="9"/><text y="14">load-balancer</text></g>
+          <g class="node" data-id="gw" data-status="healthy"  transform="translate(240,120)"><circle r="9"/><text y="14">api-gateway</text></g>
+          <g class="node" data-id="au" data-status="degraded" transform="translate(240,220)"><circle r="9"/><text y="14">auth-service</text></g>
+          <g class="node" data-id="wh" data-status="healthy"  transform="translate(240,320)"><circle r="6"/><text y="11">webhooks</text></g>
+          <g class="node" data-id="us" data-status="healthy"  transform="translate(380,80)"><circle  r="7"/><text y="12">user-service</text></g>
+          <g class="node" data-id="bl" data-status="failing"  transform="translate(380,185)"><circle r="8"/><text y="13">billing</text></g>
+          <g class="node" data-id="nt" data-status="healthy"  transform="translate(380,250)"><circle r="7"/><text y="12">notifications</text></g>
+          <g class="node" data-id="sc" data-status="healthy"  transform="translate(380,330)"><circle r="6"/><text y="11">scheduler</text></g>
+          <g class="node" data-id="pg" data-status="healthy"  transform="translate(540,80)"><circle  r="7"/><text y="12">postgres</text></g>
+          <g class="node" data-id="rd" data-status="healthy"  transform="translate(540,180)"><circle r="6"/><text y="11">redis</text></g>
+          <g class="node" data-id="qu" data-status="healthy"  transform="translate(540,250)"><circle r="6"/><text y="11">queue</text></g>
+          <g class="node" data-id="sr" data-status="healthy"  transform="translate(540,330)"><circle r="6"/><text y="11">search</text></g>
+          <g class="node" data-id="s3" data-status="healthy"  transform="translate(680,140)"><circle r="7"/><text y="12">storage</text></g>
+          <g class="node" data-id="an" data-status="healthy"  transform="translate(680,290)"><circle r="7"/><text y="12">analytics</text></g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="hint">Hover or tap a service to light its connections and reveal edge labels.</div>
+
+    <div class="legend">
+      <span><i style="background:#1F9E5C;"></i>healthy</span>
+      <span><i style="background:#D98E2B;"></i>degraded</span>
+      <span><i style="background:#E60000;"></i>failing</span>
+      <span><i style="background:#9A9AA0;"></i>unknown</span>
+      <span class="scale-key" title="Diameter scales with √degree"><i style="width:6px;height:6px;"></i><i style="width:11px;height:11px;"></i><i style="width:18px;height:18px;"></i>degree</span>
+    </div>
+
+    <div class="stats">
+      <span>Nodes <strong>14</strong></span>
+      <span>Edges <strong>16</strong></span>
+      <span>Min/Max degree <strong>1 / 4</strong></span>
+      <span>Latency probe <strong>1s</strong></span>
+      <span>Layout <strong>cose-bilkent</strong></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const wrap  = document.getElementById('mapWrap');
+  const edges = Array.from(wrap.querySelectorAll('.edge'));
+  const nodes = Array.from(wrap.querySelectorAll('.node'));
+
+  // Adjacency: node id -> Set of neighbor ids (undirected for highlight)
+  const adj = new Map();
+  nodes.forEach(n => adj.set(n.dataset.id, new Set()));
+  edges.forEach(e => {
+    adj.get(e.dataset.from)?.add(e.dataset.to);
+    adj.get(e.dataset.to)?.add(e.dataset.from);
+  });
+
+  function focus(id){
+    if (!id){ clear(); return; }
+    wrap.classList.add('focused');
+    const lit = new Set([id, ...(adj.get(id) || [])]);
+    nodes.forEach(n => {
+      const on = lit.has(n.dataset.id);
+      n.classList.toggle('lit', on);
+      n.classList.toggle('focus', n.dataset.id === id);
+    });
+    edges.forEach(e => {
+      e.classList.toggle('lit', e.dataset.from === id || e.dataset.to === id);
+    });
+  }
+  function clear(){
+    wrap.classList.remove('focused');
+    nodes.forEach(n => n.classList.remove('lit','focus'));
+    edges.forEach(e => e.classList.remove('lit'));
+  }
+
+  nodes.forEach(n => {
+    n.addEventListener('mouseenter', () => focus(n.dataset.id));
+    n.addEventListener('mouseleave', clear);
+    n.addEventListener('touchstart', (ev) => { ev.preventDefault(); focus(n.dataset.id); }, {passive:false});
+  });
+  // Hovering an edge lights it + both endpoints (focus on the source).
+  edges.forEach(e => {
+    e.addEventListener('mouseenter', () => focus(e.dataset.from));
+    e.addEventListener('mouseleave', clear);
+  });
+  wrap.addEventListener('pointerleave', clear);
+  wrap.addEventListener('click', (ev) => {
+    if (ev.target === wrap || ev.target.tagName === 'svg') clear();
+  });
+})();
+</script>
+</body></html>

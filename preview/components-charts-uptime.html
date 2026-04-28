@@ -1,0 +1,79 @@
+<!doctype html>
+<html data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="stylesheet" href="_card.css?v=6"><title>Charts — UptimeBar</title>
+<style>
+  .chart-frame{background:#FFFFFF;border:1px solid rgba(28,28,28,0.08);border-radius:4px;padding:14px;}
+  .row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(28,28,28,0.05);}
+  .row:last-child{border-bottom:none;}
+  .row-label{font-family:var(--font-mono);font-size:11px;color:#1C1C1C;width:120px;flex-shrink:0;}
+  .row-status{font-family:var(--font-mono);font-size:11px;color:#5A5A5A;text-align:right;width:80px;flex-shrink:0;font-variant-numeric:tabular-nums;}
+  .uptime{display:flex;gap:2px;flex:1;align-items:center;}
+  .uptime-cell{flex:1;height:22px;border-radius:2px;}
+  .legend{display:flex;gap:14px;margin-top:12px;font-family:var(--font-mono);font-size:11px;color:#5A5A5A;}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle;}
+</style></head>
+<body>
+<div class="card" style="background:#F5F5F5;">
+  <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#5A5A5A;">Charts · UptimeBar · 90 day status grid</div>
+
+  <div class="chart-frame">
+    <div style="font:600 13px var(--font-sans);color:#1C1C1C;">Service uptime · last 90 days</div>
+    <div style="font-family:var(--font-mono);font-size:11px;color:#5A5A5A;margin-bottom:8px;">canvas · hover for incident details</div>
+
+    <div class="row">
+      <span class="row-label">api.gateway</span>
+      <div class="uptime" id="r1"></div>
+      <span class="row-status">99.98%</span>
+    </div>
+    <div class="row">
+      <span class="row-label">postgres.primary</span>
+      <div class="uptime" id="r2"></div>
+      <span class="row-status">99.92%</span>
+    </div>
+    <div class="row">
+      <span class="row-label">redis.cache</span>
+      <div class="uptime" id="r3"></div>
+      <span class="row-status">100.00%</span>
+    </div>
+    <div class="row">
+      <span class="row-label">worker.queue</span>
+      <div class="uptime" id="r4"></div>
+      <span class="row-status">98.74%</span>
+    </div>
+    <div class="row">
+      <span class="row-label">cdn.edge</span>
+      <div class="uptime" id="r5"></div>
+      <span class="row-status">99.99%</span>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:#1F9E5C;"></i>operational</span>
+      <span><i style="background:#D98E2B;"></i>degraded</span>
+      <span><i style="background:#E60000;"></i>outage</span>
+      <span><i style="background:#7FB7FF;"></i>maintenance</span>
+      <span><i style="background:#E5E5E5;"></i>no data</span>
+    </div>
+  </div>
+</div>
+<script>
+  // Generate plausible 90-day status patterns
+  const palette = {operational:'#1F9E5C',degraded:'#D98E2B',outage:'#E60000',maintenance:'#7FB7FF','no-data':'#E5E5E5'};
+  const rows = [
+    {id:'r1', pattern: i => i===67?'outage':i===22||i===45?'degraded':'operational'},
+    {id:'r2', pattern: i => i===34?'outage':i===56?'maintenance':i===12?'degraded':'operational'},
+    {id:'r3', pattern: () => 'operational'},
+    {id:'r4', pattern: i => (i===8||i===44||i===72)?'outage':(i===15||i===33||i===58||i===80)?'degraded':'operational'},
+    {id:'r5', pattern: i => i===50?'maintenance':'operational'},
+  ];
+  for (const row of rows) {
+    const el = document.getElementById(row.id);
+    for (let i=0;i<90;i++) {
+      const status = row.pattern(i);
+      const cell = document.createElement('div');
+      cell.className = 'uptime-cell';
+      cell.style.background = palette[status];
+      cell.title = `Day ${90-i} · ${status}`;
+      el.appendChild(cell);
+    }
+  }
+</script>
+</body></html>

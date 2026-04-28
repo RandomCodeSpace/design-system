@@ -73,6 +73,7 @@ export function Dashboard({ services }: { services: readonly Service[] }) {
 ## What's in the box
 
 - **50+ React components** — Buttons, Inputs, Form controls, Layout primitives, Navigation, Feedback, Data display, Chat, Code/Markdown/Terminal/RTE, plus `ThemeProvider` + imperative `toast`
+- **Charts** (opt-in subpath) — `Chart` (line/area/bar/scatter), `Sparkline`, `Donut`, `RadialGauge`, `UptimeBar`, `Treemap`, `ServiceMap` — see [Charts](#charts) below
 - **Strongly-typed token unions** (`Size`, `SpaceSize`, `Radius`, `ThemeMode`, `BrandColor`, `Direction`, `Axis`, …)
 - **Generic components**: `Select<V>`, `Combobox<V>`, `Tabs<K>`, `Menu<K>`, `RadioGroup<V>`, `Table<T>`
 - **Strict TypeScript** — full type definitions emitted to `dist/`, source maps + declaration maps included
@@ -133,6 +134,83 @@ import { ThemeProvider, ToastRegion, toast } from "@ossrandom/design-system";
   <App />
   <ToastRegion />
 </ThemeProvider>
+```
+
+## Charts
+
+Charts ship behind an opt-in subpath because they pull heavier peer deps. The main entry stays zero-dep — you only pay for charts if you import them.
+
+```tsx
+import {
+  Chart, Sparkline, Donut, RadialGauge,
+  UptimeBar, Treemap, ServiceMap,
+} from "@ossrandom/design-system/charts";
+```
+
+Install the peer deps for the charts you actually render:
+
+| Component                 | Peer dep                                       | Fallback                            |
+| ------------------------- | ---------------------------------------------- | ----------------------------------- |
+| `Chart` (time-series)     | `uplot`                                        | SVG renderer (small datasets only)  |
+| `Sparkline`               | —                                              | inline SVG, zero deps               |
+| `Donut` / `RadialGauge`   | —                                              | inline SVG, zero deps               |
+| `UptimeBar`               | —                                              | canvas2d, zero deps                 |
+| `Treemap`                 | `d3-hierarchy`                                 | canvas2d squarify                   |
+| `ServiceMap`              | `cytoscape` + `cytoscape-cose-bilkent`         | force-directed canvas               |
+
+Charts auto-handoff to WebGL (`@deck.gl/core`, `@deck.gl/layers`) when the dataset crosses an engine threshold (`Chart` ≥100k points; `ServiceMap` ≥200 nodes). The `data-engine` attribute on the rendered root reflects the active backend (`svg` / `canvas` / `webgl`); set `--rcs-show-engine: 1` to surface a dev badge.
+
+All chart components read tokens via `readChartTheme()` and re-render on `data-theme` swap — `Signal Red` accent, mono micro-labels, tabular numerics out of the box.
+
+#### `ServiceMap` — interaction model
+
+`ServiceMap` is a directed graph; semantics live in the data, not the visuals on top of it.
+
+- **Direction.** Edges flow `source → target` with arrowheads at the target end. The deck.gl path uses `ArcLayer` (gradient source/target colors); the canvas path uses Cytoscape's bezier curve with a `triangle` arrow.
+- **Node size = degree.** Each dot's radius is computed from `in + out` edge count using `√degree` scaling — 3 px (isolated) → 14 px (densest hub). Hubs surface visually without dwarfing leaves.
+- **Status drives fill.** `healthy` / `degraded` / `failing` / `unknown` map to the `success` / `warning` / `danger` / `fg-3` tokens. Failing edges paint in `danger`.
+- **Labels.** Node labels sit below each dot in a light weight (`font-weight: 400`, `color: --fg-3`) so they don't compete with edges. Edge labels (`label?: string` on `ServiceEdge`) are rendered but hidden by default — they reveal only when their edge is in the focus set.
+- **Hover / touch focus.** Hovering or tapping a node dims the rest of the graph to ~18 % opacity and lights the focused node, its incident edges, its neighbors, and the edge labels for those incident edges. Hovering an edge lights the edge plus both endpoints. `pointerleave` clears the focus state.
+- **Engine handoff.** Auto resolves to `webgpu` › `webgl` › `canvas` based on `nodes + edges` count vs. the threshold. The deck.gl path uses an internal adjacency map and `setProps({ layers })` to re-render highlight state without rebuilding the WebGL context.
+
+```tsx
+<ServiceMap
+  nodes={[
+    { id: "lb",  label: "load-balancer", status: "healthy" },
+    { id: "au",  label: "auth-service",  status: "degraded" },
+    { id: "bl",  label: "billing",       status: "failing" },
+    /* … */
+  ]}
+  edges={[
+    { source: "lb", target: "au", label: "http" },
+    { source: "au", target: "bl", label: "grpc · 5xx", status: "failing" },
+    /* … */
+  ]}
+  height={440}
+  onNodeClick={(n) => console.log("node:", n.id)}
+/>
+```
+
+```tsx
+<Chart
+  type="line"
+  series={[{ id: "p99", label: "p99 latency", data: points }]}
+  height={240}
+/>
+
+<Sparkline data={[12, 19, 14, 22, 28, 24, 31]} />
+
+<Donut
+  segments={[
+    { label: "Compute",  value: 45 },
+    { label: "Database", value: 25 },
+    { label: "Cache",    value: 18 },
+    { label: "Other",    value: 12 },
+  ]}
+  centerLabel="cores"
+  centerValue="847"
+  showLegend
+/>
 ```
 
 ## Local development

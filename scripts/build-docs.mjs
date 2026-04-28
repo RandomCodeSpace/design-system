@@ -8,7 +8,6 @@
  *   <outDir>/index.html                 (site landing)
  *   <outDir>/site.css                   (shared header/footer + global)
  *   <outDir>/apps/index.html            (sample apps gallery)
- *   <outDir>/preview/index.html         (brand spec cards index)
  *   <outDir>/dist/styles.css            (concat colors_and_type.css + src/styles.css)
  *   <outDir>/docs/index.html            (component reference, card grid)
  *   <outDir>/docs/docs.css              (per-component page styles)
@@ -22,8 +21,8 @@
  *   src/index.tsx        (runtime export → category file)
  *   src/charts/index.ts  (charts subpath exports — "Charts" category)
  *
- * The Pages workflow stages assets/, preview/*.html, ui_kits/, then runs
- * this script (which overwrites /preview/index.html with a styled one).
+ * Every component page renders the live React component via the IIFE
+ * bundle plus Babel-standalone. There are no hand-written HTML cards.
  *
  * Pure Node built-ins.
  */
@@ -146,7 +145,6 @@ const NAV_ITEMS = [
   { id: "components", label: "Components",  path: "docs/" },
   { id: "playground", label: "Playground",  path: "docs/playground/" },
   { id: "apps",       label: "Sample apps", path: "apps/" },
-  { id: "spec",       label: "Spec cards",  path: "preview/" },
 ];
 
 function renderHeader(active, depth) {
@@ -209,7 +207,6 @@ function renderFooter(depth) {
     <a href="${p}docs/">Components</a>
     <a href="${p}docs/playground/">Playground</a>
     <a href="${p}apps/">Sample apps</a>
-    <a href="${p}preview/">Spec cards</a>
   </div>
   <div class="site-footer-col">
     <a href="${REPO_URL}" target="_blank" rel="noopener">GitHub ↗</a>
@@ -516,26 +513,6 @@ function renderDocsCss() {
 }
 .snippet code { font-size: 12.5px; line-height: 1.55; color: var(--fg-1); }
 
-.preview-frame {
-  border: 1px solid var(--border-1); border-radius: 4px;
-  padding: 32px; min-height: 120px;
-  background: var(--bg-1);
-  background-image:
-    linear-gradient(45deg, var(--bg-2) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--bg-2) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--bg-2) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--bg-2) 75%);
-  background-size: 16px 16px;
-  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
-  position: relative;
-}
-.preview-frame::before {
-  content: "PREVIEW";
-  position: absolute; top: 8px; right: 12px;
-  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
-  color: var(--fg-4);
-}
-
 /* ── Per-demo cards (render area + meta bar + collapsible code) ───────── */
 .block.demos { margin-bottom: 48px; }
 .block.demos > h2 { margin-bottom: 16px; }
@@ -779,22 +756,7 @@ function renderRootIndex() {
     </div>
   </section>
 
-  <section class="section">
-    <h2>Spec</h2>
-    <p class="blurb">Static visual references with hex annotations, used to align design and engineering.</p>
-    <div class="grid">
-      <a class="card" href="preview/">
-        <div class="kind">/preview/</div>
-        <div class="name">Brand spec cards</div>
-        <div class="desc">Colors, typography, spacing, motion, and per-component states.</div>
-      </a>
-      <a class="card" href="preview/responsive-check.html">
-        <div class="kind">/preview/responsive-check/</div>
-        <div class="name">Responsive check</div>
-        <div class="desc">Load any spec card inside an iPhone, iPad, Galaxy, or desktop frame.</div>
-      </a>
-    </div>
-  </section>
+
 </main>`;
   return htmlShell({ title: `${pkg.name} — design system`, depth: 0, active: "home", body });
 }
@@ -908,34 +870,6 @@ function renderAppsIndex() {
   return htmlShell({ title: `Sample apps — ${pkg.name}`, depth: 1, active: "apps", body });
 }
 
-function renderBrandIndex(previewFiles) {
-  const cards = previewFiles
-    .filter((f) => f.endsWith(".html") && f !== "index.html")
-    .sort()
-    .map((f) => {
-      const base = f.replace(/\.html$/, "");
-      const group = base.split("-")[0];
-      const friendly = base.replace(/-/g, " ").replace(/\b./g, (c) => c.toUpperCase()).replace("Components ", "").replace("Brand ", "").replace("Type ", "").replace("Spacing ", "").replace("Colors ", "");
-      return `<a class="card" href="${escapeHtml(f)}"><div class="kind">${escapeHtml(group)}</div><div class="name">${escapeHtml(friendly)}</div><div class="meta">${escapeHtml(base)}</div></a>`;
-    })
-    .join("");
-  const body = `<main class="page-wrap">
-  <p class="eyebrow">Spec cards</p>
-  <h1 class="page-h1">Brand & component spec.</h1>
-  <p class="lede">
-    Static visual references with hex annotations and full state coverage. Each card is a self-contained HTML file using
-    design tokens from <code>colors_and_type.css</code> — no React, no JavaScript. Use them to align design intent and
-    QA renders.
-  </p>
-  <div class="grid">${cards}</div>
-  <p style="margin-top: 32px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-3);">
-    Want to test a card on different devices? Open the
-    <a href="responsive-check.html" style="color: var(--accent);">responsive checker</a>.
-  </p>
-</main>`;
-  return htmlShell({ title: `Spec cards — ${pkg.name}`, depth: 1, active: "spec", body });
-}
-
 function renderDocsIndex() {
   const counts = {
     components: ALL_NAMES.filter((n) => !HOOKS.has(n)).length,
@@ -1038,7 +972,7 @@ function renderComponentPage(name) {
     <article class="demo" id="demo-${i}">
       ${chart
         ? `<div class="demo-render demo-render--static" id="demo-render-${i}">
-            <div class="demo-static-note">Live preview not available — charts load peer deps outside the bundle. See <a href="../../preview/components-charts-${chartExports.get(name)?.toLowerCase()}.html">spec card</a> or copy the code.</div>
+            <div class="demo-static-note">Live render coming in the chart bundle pass. Copy the code below to try it locally.</div>
           </div>`
         : `<div class="demo-render" id="demo-render-${i}"></div>`}
       <div class="demo-meta">
@@ -1288,7 +1222,6 @@ function renderPlaygroundPage() {
 mkdirSync(outDir, { recursive: true });
 mkdirSync(join(outDir, "dist"), { recursive: true });
 mkdirSync(join(outDir, "apps"), { recursive: true });
-mkdirSync(join(outDir, "preview"), { recursive: true });
 mkdirSync(join(outDir, "docs"), { recursive: true });
 mkdirSync(join(outDir, "docs/playground"), { recursive: true });
 
@@ -1297,14 +1230,6 @@ writeFileSync(join(outDir, "dist/styles.css"), colorsAndTypeCss + "\n" + compone
 
 writeFileSync(join(outDir, "index.html"), renderRootIndex());
 writeFileSync(join(outDir, "apps/index.html"), renderAppsIndex());
-
-// /preview/index.html — list every preview HTML card we've staged
-let previewFiles = [];
-try {
-  const { readdirSync } = await import("node:fs");
-  previewFiles = readdirSync(join(outDir, "preview")).filter((f) => f.endsWith(".html"));
-} catch { /* preview/ not staged yet — script may run before workflow's cp */ }
-writeFileSync(join(outDir, "preview/index.html"), renderBrandIndex(previewFiles));
 
 writeFileSync(join(outDir, "docs/index.html"), renderDocsIndex());
 writeFileSync(join(outDir, "docs/docs.css"), renderDocsCss());
@@ -1320,7 +1245,6 @@ for (const name of ALL_NAMES) {
 }
 
 console.log(`Wrote site to ${outDir}`);
-console.log(`  ${count} component pages (${runtimeExports.size} core + ${chartExports.size} charts), 1 docs index, 1 playground, 1 apps index, 1 brand index, 1 root`);
+console.log(`  ${count} component pages (${runtimeExports.size} core + ${chartExports.size} charts), 1 docs index, 1 playground, 1 apps index, 1 root`);
 console.log(`  ${runtimeExports.size + chartExports.size} runtime exports across ${DOCS_CATEGORIES.filter((c) => exportsByCategory.get(c.id).length > 0).length} docs categories`);
 console.log(`  ${tokenTypeAliases.length} tokens, ${interfaces.length} interfaces, ${componentTypeAliases.length} type aliases`);
-console.log(`  preview cards listed: ${previewFiles.filter((f) => f !== "index.html").length}`);

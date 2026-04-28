@@ -12,7 +12,6 @@ on:
       - "tests/e2e/**"
       - "playwright.config.ts"
       - "colors_and_type.css"
-      - "preview/**"
       - "ui_kits/**"
       - "package.json"
       - "pnpm-lock.yaml"

@@ -8,7 +8,7 @@
  *
  * Steps:
  *   1. Recreate <outDir>/
- *   2. Stage colors_and_type.css + assets/ + preview/ + ui_kits/
+ *   2. Stage colors_and_type.css + assets/ + ui_kits/
  *   3. Bundle src → <outDir>/docs/bundle/rcs.iife.js (esbuild IIFE)
  *   4. Run scripts/build-docs.mjs to write per-component pages
  */
@@ -25,7 +25,7 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(join(out, "docs/bundle"), { recursive: true });
 
 cpSync(join(root, "colors_and_type.css"), join(out, "colors_and_type.css"));
-for (const dir of ["assets", "preview", "ui_kits"]) {
+for (const dir of ["assets", "ui_kits"]) {
   const src = join(root, dir);
   if (existsSync(src)) cpSync(src, join(out, dir), { recursive: true });
 }

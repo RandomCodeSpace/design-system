@@ -4,6 +4,52 @@ All notable changes to `@ossrandom/design-system` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed — `ServiceMap`
+
+- **Visual refresh.** Nodes are now small dots (was: `round-rectangle` 80 × 36 cards). Diameter is computed from each node's degree (in + out edge count) using `√degree` scaling — 6 px (isolated) → 28 px (densest hub) — so hubs surface visually without dwarfing leaves. Status now drives the **fill color** (`success` / `warning` / `danger`), not just a border accent.
+- **Node labels moved below the dot** (was: centered, inside the card). Light weight, no background pill — pills covered edges. Z-order keeps dots above edges and labels beside them.
+- **Edges now declare direction and labels.**
+  - Cytoscape path: `target-arrow-shape: triangle`, `arrow-scale: 0.9`. `ServiceEdge.label` is rendered with `text-rotation: autorotate` but `text-opacity: 0` until the edge enters a focus set.
+  - deck.gl path: already directional via `ArcLayer` (gradient `source → target`); no behavior change.
+- **Hover / touch focus highlight.** Hovering or tapping a node dims everything else to ~18 % opacity and lights the focused node (accent border, weight 500), its incident edges (accent stroke, 2 px, edge label revealed), and its direct neighbors. Hovering an edge lights both endpoints. Touch start triggers the same focus on the canvas path. `pointerleave` and an empty-area click clear focus.
+- **WebGL highlight is in-place.** The deck.gl path builds an adjacency map up front and re-renders highlight state via `inst.setProps({ layers })` with `updateTriggers` keyed on the focus id — no full context re-init per hover.
+
+### Internal
+
+- New `computeDegrees(nodes, edges)` and `degreeRadius(deg, max)` helpers in `src/charts/ServiceMap.tsx`. `PositionedNode` extended with a precomputed `degree` field threaded through both rendering paths.
+- New Cytoscape stylesheet classes `.rcs-dim`, `.rcs-focus`, `.rcs-focus-edge`, `.rcs-neighbor` with 120 ms transitions on opacity, color, and border-width.
+- Tiny `cssEscape()` polyfill for Cytoscape ID selectors when `CSS.escape` is unavailable.
+
+## [0.3.0] — 2026-04-28
+
+### Added
+
+- **Charts module** at the new `@ossrandom/design-system/charts` subpath — opt-in to keep the main entry zero-dep:
+  - **`Chart`** — line / area / bar / scatter time-series. Renders with `uplot` (canvas) when installed; falls back to inline SVG for small datasets. Auto-handoff to WebGL via `@deck.gl/core` + `@deck.gl/layers` once a series crosses ~100k points. Pan / zoom / crosshair / synced cursors across stacked panels; tabular tooltips with `Signal Red` accent.
+  - **`Sparkline`** — zero-dep inline SVG. `data: number[]`, optional `showArea`. Designed to drop into `Stat` tiles (80×24 default). Handles flat (range = 0) inputs without NaN.
+  - **`Donut`** + **`RadialGauge`** — zero-dep SVG. `Donut` takes typed `DonutSegment[]`, optional center label / value, optional legend, per-segment click handler. `RadialGauge` is a 270° arc with `tone: "good" | "warning" | "bad"`.
+  - **`UptimeBar`** — 90-day status grid on canvas. `UptimeCell[]` with `status: "operational" | "degraded" | "outage" | "maintenance" | "no-data"`; cursor-tracking tooltip; quadtree picking.
+  - **`Treemap`** — squarified treemap. Loads `d3-hierarchy` lazily; falls back to a built-in squarify pass when not installed. Canvas2d at any size, WebGL handoff on `>50k` leaves.
+  - **`ServiceMap`** — directed graph for production topology. Loads `cytoscape` + `cytoscape-cose-bilkent` lazily; falls back to a small force-directed canvas. Status-keyed node strokes (`healthy` / `degraded` / `failing` / `unknown`), arrow markers on edges, drag-to-pan, scroll-to-zoom.
+
+- **Optional peer deps** (`peerDependenciesMeta`): `uplot`, `d3-hierarchy`, `d3-force`, `cytoscape`, `cytoscape-cose-bilkent`, `@deck.gl/core`, `@deck.gl/layers`. The main entry imports none of them — install only what the charts you render require.
+
+- **Chart theming**: `readChartTheme()` + `onThemeChange()` exported from `/charts` — hook a custom renderer to the same tokens (`--accent`, `--fg-1`, `--bg-2`, `--font-mono`, …) and re-render on `data-theme` swap.
+
+- **Tokens**: `--elevation-tooltip` for chart tooltips; engine-badge surfaces `[data-engine]` attribute on chart roots — opt-in dev badge via `--rcs-show-engine: 1`.
+
+### Notes
+
+No breaking changes. Existing imports from `@ossrandom/design-system` continue to work unchanged. To use charts:
+
+```tsx
+import { Chart, Sparkline, Donut } from "@ossrandom/design-system/charts";
+```
+
+…and `pnpm add` the peer deps for the charts you render.
+
 ## [0.2.1] — 2026-04-27
 
 ### Fixed

@@ -20,6 +20,7 @@
  *   src/components.ts    (interfaces, supporting types)
  *   src/tokens.ts        (token unions)
  *   src/index.tsx        (runtime export → category file)
+ *   src/charts/index.ts  (charts subpath exports — "Charts" category)
  *
  * The Pages workflow stages assets/, preview/*.html, ui_kits/, then runs
  * this script (which overwrites /preview/index.html with a styled one).
@@ -30,7 +31,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { generateDemos } from "./component-examples.mjs";
-import { extractInterfaces, extractTypeAliases, parseRuntimeExports } from "./parse-source.mjs";
+import { extractInterfaces, extractTypeAliases, parseRuntimeExports, parseChartsExports } from "./parse-source.mjs";
 
 const root = process.cwd();
 const outDir = resolve(root, process.argv[2] || "_site");
@@ -39,6 +40,10 @@ mkdirSync(outDir, { recursive: true });
 const componentsDts = readFileSync(join(root, "src/components.ts"), "utf8");
 const tokensTs = readFileSync(join(root, "src/tokens.ts"), "utf8");
 const indexTsx = readFileSync(join(root, "src/index.tsx"), "utf8");
+const chartsIndexTs = (() => {
+  try { return readFileSync(join(root, "src/charts/index.ts"), "utf8"); }
+  catch { return ""; }
+})();
 const colorsAndTypeCss = readFileSync(join(root, "colors_and_type.css"), "utf8");
 const componentStylesCss = readFileSync(join(root, "src/styles.css"), "utf8");
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
@@ -47,6 +52,7 @@ const REPO_URL = "https://github.com/RandomCodeSpace/design-system";
 
 // ─── 1. Parse runtime exports + interfaces + token aliases ────────────
 const runtimeExports = parseRuntimeExports(indexTsx);
+const chartExports = parseChartsExports(chartsIndexTs);
 const interfaces = extractInterfaces(componentsDts);
 const componentTypeAliases = extractTypeAliases(componentsDts);
 const tokenTypeAliases = extractTypeAliases(tokensTs);
@@ -62,11 +68,44 @@ const DOCS_CATEGORIES = [
   { id: "navigation", label: "Navigation",        blurb: "Tabs, menus, breadcrumb, pagination.",       srcFiles: ["navigation"] },
   { id: "feedback",   label: "Feedback",          blurb: "Status, modals, toasts, tooltips.",          srcFiles: ["feedback"] },
   { id: "content",    label: "Content",           blurb: "Code, markdown, terminal, chat, RTE.",       srcFiles: ["code", "chat"] },
+  { id: "charts",     label: "Charts",            blurb: "Opt-in subpath — Chart, Sparkline, Donut, RadialGauge, UptimeBar, Treemap, ServiceMap.", charts: true },
 ];
 
+// Peer-dep callouts for chart pages.
+const CHART_PEER_DEPS = {
+  Chart:       ["uplot (canvas, default)", "@deck.gl/core + @deck.gl/layers (webgl/webgpu)"],
+  Sparkline:   [],
+  Donut:       [],
+  RadialGauge: [],
+  UptimeBar:   [],
+  Treemap:     ["d3-hierarchy"],
+  ServiceMap:  ["cytoscape + cytoscape-cose-bilkent (canvas)", "@deck.gl/core + @deck.gl/layers + d3-force (webgl)"],
+};
+
+// Canonical static code snippets per chart (charts aren't in the IIFE
+// bundle, so their docs pages show static code rather than live render).
+const CHART_DEMOS = {
+  Chart: { title: "Time-series line chart",
+    code: `<Chart\n  timestamps={[Date.now() - 60_000, Date.now() - 30_000, Date.now()]}\n  series={[{ id: "cpu", label: "CPU %", data: [35, 62, 78] }]}\n  height={240}\n/>` },
+  Sparkline: { title: "Inline trend",
+    code: `<Sparkline data={[12, 18, 22, 19, 25, 28, 35, 32, 42, 48]} width={120} height={32} />` },
+  Donut: { title: "Capacity breakdown",
+    code: `<Donut\n  segments={[\n    { label: "Compute",  value: 45 },\n    { label: "Database", value: 25 },\n    { label: "Cache",    value: 18 },\n    { label: "Other",    value: 12 },\n  ]}\n  centerLabel="cores" centerValue="847"\n/>` },
+  RadialGauge: { title: "SLO gauge",
+    code: `<RadialGauge value={94} max={100} label="30-day SLO" tone="good" />` },
+  UptimeBar: { title: "30-day uptime",
+    code: `<UptimeBar\n  cells={Array.from({ length: 30 }, (_, i) => ({\n    status: i === 12 ? "outage" : i === 19 ? "degraded" : "ok",\n    timestamp: Date.now() - (29 - i) * 86_400_000,\n  }))}\n/>` },
+  Treemap: { title: "Resource breakdown",
+    code: `<Treemap\n  nodes={{\n    id: "all", label: "All",\n    children: [\n      { id: "compute", label: "Compute", value: 100 },\n      { id: "storage", label: "Storage", value: 60 },\n      { id: "network", label: "Network", value: 40 },\n    ],\n  }}\n  height={320}\n/>` },
+  ServiceMap: { title: "Service topology",
+    code: `<ServiceMap\n  nodes={[\n    { id: "api",   label: "API Gateway", status: "healthy" },\n    { id: "auth",  label: "Auth",        status: "healthy" },\n    { id: "users", label: "Users DB",    status: "degraded" },\n  ]}\n  edges={[\n    { source: "api", target: "auth" },\n    { source: "api", target: "users", status: "failing" },\n  ]}\n  height={420}\n/>` },
+};
+
+function isChart(name) { return chartExports.has(name); }
 function categoryForExport(name) {
+  if (isChart(name)) return DOCS_CATEGORIES.find((c) => c.id === "charts");
   const f = runtimeExports.get(name);
-  return f ? DOCS_CATEGORIES.find((c) => c.srcFiles.includes(f)) : null;
+  return f ? DOCS_CATEGORIES.find((c) => !c.charts && c.srcFiles?.includes(f)) : null;
 }
 
 const exportsByCategory = new Map(DOCS_CATEGORIES.map((c) => [c.id, []]));
@@ -74,8 +113,11 @@ for (const [name] of runtimeExports) {
   const cat = categoryForExport(name);
   if (cat) exportsByCategory.get(cat.id).push(name);
 }
+for (const [name] of chartExports) {
+  exportsByCategory.get("charts").push(name);
+}
 const HOOKS = new Set(["useTheme", "toast"]);
-const ALL_NAMES = [...runtimeExports.keys()];
+const ALL_NAMES = [...runtimeExports.keys(), ...chartExports.keys()];
 
 // ─── 4. Helpers ───────────────────────────────────────────────────────
 function escapeHtml(s) {
@@ -557,6 +599,34 @@ function renderDocsCss() {
   color: var(--fg-1); line-height: 1.55; white-space: pre;
 }
 
+/* Charts: static placeholder where live preview would be, plus peer-dep list. */
+.demo-render--static {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 120px; padding: 24px;
+  background: var(--bg-2);
+  background-image:
+    repeating-linear-gradient(
+      45deg, transparent, transparent 8px,
+      var(--bg-1) 8px, var(--bg-1) 9px
+    );
+}
+.demo-static-note {
+  font-family: var(--font-mono); font-size: 11px; line-height: 1.55;
+  color: var(--fg-3); text-align: center; max-width: 48ch;
+  background: var(--bg-1); border: 1px solid var(--border-1); border-radius: 4px;
+  padding: 10px 14px;
+}
+.demo-static-note a { color: var(--accent); }
+ul.peer-deps {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+ul.peer-deps li code {
+  font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);
+  padding: 6px 10px; background: var(--bg-2); border: 1px solid var(--border-1); border-radius: 4px;
+  display: inline-block;
+}
+
 table.props { width: 100%; border-collapse: collapse; border: 1px solid var(--border-1); border-radius: 4px; overflow: hidden; }
 table.props th, table.props td {
   padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border-1);
@@ -877,7 +947,9 @@ function renderDocsIndex() {
     .filter((c) => exportsByCategory.get(c.id).length > 0)
     .map((cat) => {
       const items = exportsByCategory.get(cat.id);
-      const srcLabel = cat.srcFiles.map((f) => `src/components/${f}.tsx`).join(" · ");
+      const srcLabel = cat.charts
+        ? `src/charts/  ·  import from "${pkg.name}/charts"`
+        : cat.srcFiles.map((f) => `src/components/${f}.tsx`).join(" · ");
       const cards = items.map((n) => {
         const iface = findPropsFor(n);
         const isHook = HOOKS.has(n);
@@ -937,11 +1009,21 @@ function renderPropsTable(iface) {
 function renderComponentPage(name) {
   const iface = findPropsFor(name);
   const isHook = HOOKS.has(name);
+  const chart = isChart(name);
   const generics = iface?.generics || "";
   const cat = categoryForExport(name);
-  const srcFile = runtimeExports.get(name);
-  const demos = getDemos(name);
-  const importLine = `import { ${name} } from "${pkg.name}";`;
+  const srcPath = chart
+    ? `src/charts/${chartExports.get(name)}.tsx`
+    : `src/components/${runtimeExports.get(name)}.tsx`;
+  // Charts can't run live in the IIFE bundle (peer deps live outside it),
+  // so we show static code snippets instead of running them.
+  const demos = chart
+    ? (CHART_DEMOS[name] ? [CHART_DEMOS[name]] : [])
+    : getDemos(name);
+  const importLine = chart
+    ? `import { ${name} } from "${pkg.name}/charts";`
+    : `import { ${name} } from "${pkg.name}";`;
+  const peerDeps = chart ? (CHART_PEER_DEPS[name] || []) : [];
   const inheritance = iface?.extends ? `<p class="inherits">extends ${code(iface.extends)}</p>` : "";
   const related = findRelatedTypes(iface);
   const relatedHtml = related.length === 0 ? "" : `<section class="related">
@@ -954,7 +1036,11 @@ function renderComponentPage(name) {
 
   const demosHtml = demos.map((d, i) => `
     <article class="demo" id="demo-${i}">
-      <div class="demo-render" id="demo-render-${i}"></div>
+      ${chart
+        ? `<div class="demo-render demo-render--static" id="demo-render-${i}">
+            <div class="demo-static-note">Live preview not available — charts load peer deps outside the bundle. See <a href="../../preview/components-charts-${chartExports.get(name)?.toLowerCase()}.html">spec card</a> or copy the code.</div>
+          </div>`
+        : `<div class="demo-render" id="demo-render-${i}"></div>`}
       <div class="demo-meta">
         <div class="demo-meta-text">
           <h3>${escapeHtml(d.title)}</h3>
@@ -962,11 +1048,13 @@ function renderComponentPage(name) {
         </div>
         <div class="demo-meta-actions">
           <button type="button" class="demo-action" data-action="copy" data-target="${i}" title="Copy code">⎘ Copy</button>
-          <a class="demo-action" href="../playground/?code=${encodeForUrl(d.code)}" target="_blank" rel="noopener" title="Open in playground">↗ Playground</a>
-          <button type="button" class="demo-action demo-toggle" data-target="${i}" aria-expanded="false">‹/› Show code</button>
+          ${chart
+            ? ""
+            : `<a class="demo-action" href="../playground/?code=${encodeForUrl(d.code)}" target="_blank" rel="noopener" title="Open in playground">↗ Playground</a>`}
+          <button type="button" class="demo-action demo-toggle" data-target="${i}" aria-expanded="${chart ? "true" : "false"}">‹/› ${chart ? "Hide" : "Show"} code</button>
         </div>
       </div>
-      <div class="demo-code" id="demo-code-${i}" hidden>
+      <div class="demo-code" id="demo-code-${i}"${chart ? "" : " hidden"}>
         <pre><code class="lang-tsx">${escapeHtml(d.code)}</code></pre>
       </div>
     </article>
@@ -987,9 +1075,9 @@ function renderComponentPage(name) {
       <div class="crumbs">
         <a href="..">Components</a><span class="sep">/</span><span>${escapeHtml(cat?.label || "Other")}</span><span class="sep">/</span><span class="crumb-now">${escapeHtml(name)}</span>
       </div>
-      <span class="kind">${isHook ? "hook" : "component"}</span>
+      <span class="kind">${isHook ? "hook" : (chart ? "component (charts)" : "component")}</span>
       <h1>${escapeHtml(name)}<span class="generics">${escapeHtml(generics)}</span></h1>
-      <p class="src"><code>src/components/${escapeHtml(srcFile)}.tsx</code></p>
+      <p class="src"><code>${escapeHtml(srcPath)}</code></p>
     </header>
 
     <section class="block">
@@ -997,8 +1085,15 @@ function renderComponentPage(name) {
       <pre class="snippet"><code>${escapeHtml(importLine)}</code></pre>
     </section>
 
+    ${chart ? `<section class="block">
+      <h2>Peer dependencies</h2>
+      ${peerDeps.length === 0
+        ? `<p class="muted">None — pure SVG / canvas2d render path.</p>`
+        : `<ul class="peer-deps">${peerDeps.map((d) => `<li><code>${escapeHtml(d)}</code></li>`).join("")}</ul>`}
+    </section>` : ""}
+
     <section class="block demos">
-      <h2>Examples</h2>
+      <h2>${chart ? "Example" : "Examples"}</h2>
       ${demosHtml}
     </section>
 
@@ -1017,7 +1112,10 @@ function renderComponentPage(name) {
   <link rel="stylesheet" href="../docs.css">`;
 
   // Build a script that runs each demo and wires up copy / toggle / sidebar drawer.
-  const runCalls = demos.map((d, i) => `runExample(${JSON.stringify(d.code)}, "demo-render-${i}");`).join("\n      ");
+  // Charts skip the live runner — they're not in the IIFE bundle.
+  const runCalls = chart
+    ? ""
+    : demos.map((d, i) => `runExample(${JSON.stringify(d.code)}, "demo-render-${i}");`).join("\n      ");
   const codeJson = JSON.stringify(demos.map((d) => d.code));
 
   const tail = `
@@ -1222,7 +1320,7 @@ for (const name of ALL_NAMES) {
 }
 
 console.log(`Wrote site to ${outDir}`);
-console.log(`  ${count} component pages, 1 docs index, 1 playground, 1 apps index, 1 brand index, 1 root`);
-console.log(`  ${runtimeExports.size} runtime exports across ${DOCS_CATEGORIES.length} docs categories`);
+console.log(`  ${count} component pages (${runtimeExports.size} core + ${chartExports.size} charts), 1 docs index, 1 playground, 1 apps index, 1 brand index, 1 root`);
+console.log(`  ${runtimeExports.size + chartExports.size} runtime exports across ${DOCS_CATEGORIES.filter((c) => exportsByCategory.get(c.id).length > 0).length} docs categories`);
 console.log(`  ${tokenTypeAliases.length} tokens, ${interfaces.length} interfaces, ${componentTypeAliases.length} type aliases`);
 console.log(`  preview cards listed: ${previewFiles.filter((f) => f !== "index.html").length}`);

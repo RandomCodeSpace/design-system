@@ -21,6 +21,15 @@ beforeAll(() => {
   if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) {
     Element.prototype.scrollIntoView = function () {};
   }
+  // jsdom doesn't implement ResizeObserver. Charts use it to track their
+  // container width; a no-op stub is sufficient for unit tests.
+  if (typeof globalThis !== "undefined" && !("ResizeObserver" in globalThis)) {
+    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  }
 });
 
 afterEach(() => {

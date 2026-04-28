@@ -691,3 +691,148 @@ export interface UseTheme {
   readonly setMode: (m: ThemeMode) => void;
   readonly toggle: () => void;
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════════════════════
+// Subpath import: `@ossrandom/design-system/charts`. Heavy peer deps
+// (uplot, d3-hierarchy, cytoscape, deck.gl) are loaded lazily at the
+// component level — the *types* below are pure and safe to import from
+// anywhere. Renderer engines are abstracted behind `RenderEngine` so
+// consumers can request "auto" and let the component pick the best
+// available adapter (webgpu > webgl > canvas).
+
+/** Chart rendering engine. "auto" picks the best available at runtime. */
+export type RenderEngine = "auto" | "canvas" | "webgl" | "webgpu";
+
+// ─── Chart (time-series line / area / bar) ────────────────────────────
+export type ChartType = "line" | "area" | "bar";
+
+/** A single x/y sample. Charts accept parallel `timestamps` + `series.data`
+ *  arrays for performance, but a `ChartPoint` is the conceptual unit. */
+export interface ChartPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface ChartSeries {
+  readonly label: string;
+  readonly data: readonly number[];
+  readonly color?: string;
+}
+
+export interface ChartProps extends BaseProps {
+  readonly type?: ChartType;
+  readonly timestamps: readonly number[];
+  readonly series: readonly ChartSeries[];
+  readonly height?: number;
+  readonly showGrid?: boolean;
+  readonly showLegend?: boolean;
+  readonly xLabel?: string;
+  readonly yLabel?: string;
+  readonly engine?: RenderEngine;
+  readonly onPointClick?: (point: ChartPoint, seriesIndex: number) => void;
+}
+
+// ─── Sparkline ────────────────────────────────────────────────────────
+export interface SparklineProps extends BaseProps {
+  readonly data: readonly number[];
+  readonly width?: number;
+  readonly height?: number;
+  readonly stroke?: string;
+  readonly fill?: string;
+  readonly showArea?: boolean;
+  readonly strokeWidth?: number;
+}
+
+// ─── Donut · RadialGauge ──────────────────────────────────────────────
+export interface DonutSegment {
+  readonly label: string;
+  readonly value: number;
+  readonly color?: string;
+}
+
+export interface DonutProps extends BaseProps {
+  readonly segments: readonly DonutSegment[];
+  readonly size?: number;
+  readonly thickness?: number;
+  readonly centerLabel?: ReactNode;
+  readonly centerValue?: ReactNode;
+  readonly showLegend?: boolean;
+  readonly onSegmentClick?: (segment: DonutSegment, index: number) => void;
+}
+
+export interface RadialGaugeProps extends BaseProps {
+  readonly value: number;
+  readonly max?: number;
+  readonly size?: number;
+  readonly thickness?: number;
+  readonly label?: ReactNode;
+  readonly tone?: "neutral" | "good" | "warning" | "bad";
+}
+
+// ─── UptimeBar ────────────────────────────────────────────────────────
+export type UptimeStatus = "operational" | "degraded" | "outage" | "maintenance" | "no-data";
+
+export interface UptimeCell {
+  readonly status: UptimeStatus;
+  readonly label?: string;
+  readonly timestamp?: number;
+}
+
+export interface UptimeBarProps extends BaseProps {
+  readonly cells: readonly UptimeCell[];
+  readonly height?: number;
+  readonly gap?: number;
+  readonly cellRadius?: number;
+  readonly onCellHover?: (cell: UptimeCell | null, index: number) => void;
+}
+
+// ─── Treemap ──────────────────────────────────────────────────────────
+export interface TreemapNode {
+  readonly name: string;
+  readonly value?: number;
+  readonly color?: string;
+  readonly children?: readonly TreemapNode[];
+}
+
+export interface TreemapProps extends BaseProps {
+  readonly data: TreemapNode;
+  readonly height?: number;
+  readonly padding?: number;
+  readonly maxDepth?: number;
+  readonly engine?: RenderEngine;
+  readonly valueFormat?: (value: number) => string;
+  readonly onNodeClick?: (node: TreemapNode) => void;
+  readonly onNodeHover?: (node: TreemapNode | null) => void;
+}
+
+// ─── ServiceMap ───────────────────────────────────────────────────────
+/** A node in a service-topology graph. `status` drives the dot color
+ *  (healthy/degraded/failing); pre-computed positions are honoured by
+ *  the WebGL renderer and skip the d3-force layout pass. */
+export interface ServiceNode {
+  readonly id: string;
+  readonly label: string;
+  readonly status?: "healthy" | "degraded" | "failing" | "unknown";
+  readonly kind?: string;
+  readonly x?: number;
+  readonly y?: number;
+}
+
+export interface ServiceEdge {
+  readonly source: string;
+  readonly target: string;
+  readonly label?: string;
+  readonly status?: "healthy" | "failing";
+}
+
+export interface ServiceMapProps extends BaseProps {
+  readonly nodes: readonly ServiceNode[];
+  readonly edges: readonly ServiceEdge[];
+  readonly height?: number;
+  readonly layout?: "cose-bilkent" | "circle" | "grid" | "concentric" | "breadthfirst";
+  readonly engine?: RenderEngine;
+  readonly onNodeClick?: (node: ServiceNode) => void;
+  readonly onEdgeClick?: (edge: { source: string; target: string }) => void;
+}

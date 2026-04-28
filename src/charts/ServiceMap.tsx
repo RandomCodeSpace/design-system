@@ -28,8 +28,8 @@ type CytoElement = {
   data: (key?: string) => unknown;
   addClass: (cls: string) => void;
   removeClass: (cls: string) => void;
-  connectedEdges: () => CytoCollection;
-  connectedNodes: () => CytoCollection;
+  connectedEdges?: () => CytoCollection;
+  connectedNodes?: () => CytoCollection;
   isNode?: () => boolean;
   isEdge?: () => boolean;
 };
@@ -52,9 +52,8 @@ let cytoCache: { ctor: CytoCtor } | null = null;
 async function loadCyto(): Promise<CytoCtor | null> {
   if (cytoCache) return cytoCache.ctor;
   try {
-    // @ts-expect-error — peer dep
     const mod = await import("cytoscape");
-    const cytoscape = (mod.default ?? mod) as CytoCtor & { use: (ext: unknown) => void };
+    const cytoscape = (mod.default ?? mod) as unknown as CytoCtor & { use: (ext: unknown) => void };
     try {
       // @ts-expect-error — optional layout
       const cose = await import("cytoscape-cose-bilkent");
@@ -194,19 +193,19 @@ export function ServiceMap(props: ServiceMapProps): React.ReactElement {
         const isNode = el.isNode?.() ?? true;
         cy.elements().addClass("rcs-dim");
         if (isNode) {
-          const incident = el.connectedEdges();
-          const neighbors = el.connectedNodes();
-          neighbors.removeClass("rcs-dim");
-          incident.removeClass("rcs-dim");
+          const incident = el.connectedEdges?.();
+          const neighbors = el.connectedNodes?.();
+          neighbors?.removeClass("rcs-dim");
+          incident?.removeClass("rcs-dim");
           (cy.$(`#${cssEscape(el.id())}`)).removeClass("rcs-dim");
           (cy.$(`#${cssEscape(el.id())}`)).addClass("rcs-focus");
-          incident.addClass("rcs-focus-edge");
-          neighbors.addClass("rcs-neighbor");
+          incident?.addClass("rcs-focus-edge");
+          neighbors?.addClass("rcs-neighbor");
         } else {
           // edge
-          const ends = el.connectedNodes();
-          ends.removeClass("rcs-dim");
-          ends.addClass("rcs-neighbor");
+          const ends = el.connectedNodes?.();
+          ends?.removeClass("rcs-dim");
+          ends?.addClass("rcs-neighbor");
         }
       };
       const focusOff = () => {

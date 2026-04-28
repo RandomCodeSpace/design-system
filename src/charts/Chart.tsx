@@ -28,7 +28,6 @@ let uplotCache: { ctor: UplotCtor } | null = null;
 async function loadUplot(): Promise<UplotCtor | null> {
   if (uplotCache) return uplotCache.ctor;
   try {
-    // @ts-expect-error — peer dep
     const mod = await import("uplot");
     // @ts-expect-error — uplot CSS
     await import("uplot/dist/uPlot.min.css").catch(() => { /* best effort */ });

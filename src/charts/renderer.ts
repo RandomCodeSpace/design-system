@@ -94,9 +94,7 @@ let deckCache: { Deck: DeckCore; SolidPolygonLayer: DeckLayer; ScatterplotLayer:
 export async function loadDeck(): Promise<typeof deckCache> {
   if (deckCache) return deckCache;
   try {
-    // @ts-expect-error — optional peer deps
     const core = await import("@deck.gl/core");
-    // @ts-expect-error — optional peer deps
     const layers = await import("@deck.gl/layers");
     deckCache = {
       Deck: core.Deck,

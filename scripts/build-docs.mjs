@@ -576,24 +576,7 @@ function renderDocsCss() {
   color: var(--fg-1); line-height: 1.55; white-space: pre;
 }
 
-/* Charts: static placeholder where live preview would be, plus peer-dep list. */
-.demo-render--static {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 120px; padding: 24px;
-  background: var(--bg-2);
-  background-image:
-    repeating-linear-gradient(
-      45deg, transparent, transparent 8px,
-      var(--bg-1) 8px, var(--bg-1) 9px
-    );
-}
-.demo-static-note {
-  font-family: var(--font-mono); font-size: 11px; line-height: 1.55;
-  color: var(--fg-3); text-align: center; max-width: 48ch;
-  background: var(--bg-1); border: 1px solid var(--border-1); border-radius: 4px;
-  padding: 10px 14px;
-}
-.demo-static-note a { color: var(--accent); }
+/* Charts: peer-dep list (live preview now renders via window.RCSCharts). */
 ul.peer-deps {
   list-style: none; margin: 0; padding: 0;
   display: flex; flex-direction: column; gap: 6px;
@@ -647,35 +630,37 @@ html { scroll-behavior: smooth; }
 }
 
 function renderRunner() {
-  return `// Shared runtime for component live previews and the playground.
-// Loaded after window.RCS (from /docs/bundle/rcs.iife.js) and Babel-standalone.
+  return `// Shared runtime for component live previews, the playground, and the
+// charts subpath. Loaded after the IIFE bundle(s) and Babel-standalone.
+//
+//   runExample(code, targetId)        — core components, uses window.RCS
+//   runChartExample(code, targetId)   — chart components, uses window.RCSCharts
 (function (global) {
-  function listAllNames() {
-    return Object.keys(global.RCS || {}).filter(function (n) { return n !== "default"; });
-  }
   function escapeHtml(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
   function showError(target, msg) {
     target.innerHTML = '<div class="err">' + escapeHtml(msg) + '</div>';
   }
+  function transformExample(R, code) {
+    var names = Object.keys(R || {}).filter(function (n) { return n !== "default"; });
+    return (
+      "(function() { var R = arguments[0]; " +
+      "var { " + names.join(", ") + " } = R; " +
+      "return (" + code + "); " +
+      "})"
+    );
+  }
   function runExample(code, targetId) {
     var target = document.getElementById(targetId || "preview");
     if (!target) return;
     if (!global.RCS) return showError(target, "window.RCS not loaded");
     if (!global.Babel) return showError(target, "Babel standalone not loaded");
-    var names = listAllNames();
-    var wrapped =
-      "(function() { var RCS = window.RCS; " +
-      "var { " + names.join(", ") + " } = RCS; " +
-      "return (" + code + "); " +
-      "})()";
-    var transformed;
-    try {
-      transformed = global.Babel.transform(wrapped, { presets: ["env", "react"] }).code;
-    } catch (e) { return showError(target, "Compile error: " + (e && e.message || e)); }
-    var result;
-    try { result = (0, eval)(transformed); }
+    var wrapped = transformExample(global.RCS, code);
+    var transformed, factory, result;
+    try { transformed = global.Babel.transform(wrapped, { presets: ["env", "react"] }).code; }
+    catch (e) { return showError(target, "Compile error: " + (e && e.message || e)); }
+    try { factory = (0, eval)(transformed); result = factory(global.RCS); }
     catch (e) { return showError(target, "Runtime error: " + (e && e.message || e)); }
     try {
       var R = global.RCS;
@@ -686,7 +671,28 @@ function renderRunner() {
       root.render(R.React.createElement(R.ThemeProvider, { mode: "dark" }, result));
     } catch (e) { showError(target, "Render error: " + (e && e.message || e)); }
   }
+  function runChartExample(code, targetId) {
+    var target = document.getElementById(targetId || "preview");
+    if (!target) return;
+    if (!global.RCSCharts) return showError(target, "window.RCSCharts not loaded");
+    if (!global.Babel) return showError(target, "Babel standalone not loaded");
+    var wrapped = transformExample(global.RCSCharts, code);
+    var transformed, factory, result;
+    try { transformed = global.Babel.transform(wrapped, { presets: ["env", "react"] }).code; }
+    catch (e) { return showError(target, "Compile error: " + (e && e.message || e)); }
+    try { factory = (0, eval)(transformed); result = factory(global.RCSCharts); }
+    catch (e) { return showError(target, "Runtime error: " + (e && e.message || e)); }
+    try {
+      var R = global.RCSCharts;
+      target.innerHTML = "";
+      var mount = document.createElement("div");
+      target.appendChild(mount);
+      var root = R.createRoot(mount);
+      root.render(result);
+    } catch (e) { showError(target, "Render error: " + (e && e.message || e)); }
+  }
   global.runExample = runExample;
+  global.runChartExample = runChartExample;
 })(typeof window !== "undefined" ? window : globalThis);
 `;
 }
@@ -990,11 +996,7 @@ function renderComponentPage(name) {
 
   const demosHtml = demos.map((d, i) => `
     <article class="demo" id="demo-${i}">
-      ${chart
-        ? `<div class="demo-render demo-render--static" id="demo-render-${i}">
-            <div class="demo-static-note">Live render coming in the chart bundle pass. Copy the code below to try it locally.</div>
-          </div>`
-        : `<div class="demo-render" id="demo-render-${i}"></div>`}
+      <div class="demo-render" id="demo-render-${i}"></div>
       <div class="demo-meta">
         <div class="demo-meta-text">
           <h3>${escapeHtml(d.title)}</h3>
@@ -1005,10 +1007,10 @@ function renderComponentPage(name) {
           ${chart
             ? ""
             : `<a class="demo-action" href="../playground/?code=${encodeForUrl(d.code)}" target="_blank" rel="noopener" title="Open in playground">↗ Playground</a>`}
-          <button type="button" class="demo-action demo-toggle" data-target="${i}" aria-expanded="${chart ? "true" : "false"}">‹/› ${chart ? "Hide" : "Show"} code</button>
+          <button type="button" class="demo-action demo-toggle" data-target="${i}" aria-expanded="false">‹/› Show code</button>
         </div>
       </div>
-      <div class="demo-code" id="demo-code-${i}"${chart ? "" : " hidden"}>
+      <div class="demo-code" id="demo-code-${i}" hidden>
         <pre><code class="lang-tsx">${escapeHtml(d.code)}</code></pre>
       </div>
     </article>
@@ -1063,24 +1065,27 @@ function renderComponentPage(name) {
 
   const head = `
   <link rel="stylesheet" href="../../dist/styles.css">
-  <link rel="stylesheet" href="../docs.css">`;
+  <link rel="stylesheet" href="../docs.css">${chart ? `
+  <link rel="stylesheet" href="../bundle/rcs-charts.iife.css">` : ""}`;
 
   // Build a script that runs each demo and wires up copy / toggle / sidebar drawer.
-  // Charts skip the live runner — they're not in the IIFE bundle.
-  const runCalls = chart
-    ? ""
-    : demos.map((d, i) => `runExample(${JSON.stringify(d.code)}, "demo-render-${i}");`).join("\n      ");
+  // The runner functions themselves verify their bundle is loaded (window.RCS
+  // for runExample, window.RCSCharts for runChartExample) and surface the
+  // failure inline, so we only need to guard against runner.js itself failing.
+  const runFn = chart ? "runChartExample" : "runExample";
+  const runCalls = demos.map((d, i) => `${runFn}(${JSON.stringify(d.code)}, "demo-render-${i}");`).join("\n      ");
   const codeJson = JSON.stringify(demos.map((d) => d.code));
 
   const tail = `
-  <script src="../bundle/rcs.iife.js"></script>
+  <script src="../bundle/rcs.iife.js"></script>${chart ? `
+  <script src="../bundle/rcs-charts.iife.js"></script>` : ""}
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
   <script src="../runner.js"></script>
   <script>
     (function () {
       var DEMO_CODES = ${codeJson};
       function runAll() {
-        if (typeof runExample !== 'function') {
+        if (typeof ${runFn} !== 'function') {
           document.querySelectorAll('.demo-render').forEach(function (el) {
             el.innerHTML = '<div class="err">runner.js failed to load</div>';
           });

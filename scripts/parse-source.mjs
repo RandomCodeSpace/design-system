@@ -90,3 +90,24 @@ export function parseRuntimeExports(indexTsxSrc) {
   }
   return map;
 }
+
+// Charts live at the `./charts` subpath. Their barrel re-exports look like
+// `export { Chart } from "./Chart"` (file path relative to src/charts/, not
+// the components/ subtree). Returns Map<name, fileBasename>.
+//
+// We restrict to component files — those whose basename starts with an
+// uppercase letter (`Chart`, `ServiceMap`, …). Utility re-exports from
+// `./theme` etc. are excluded so they don't pollute the docs/llms output.
+export function parseChartsExports(chartsIndexSrc) {
+  const map = new Map();
+  const re = /^export\s*\{\s*([\s\S]+?)\s*\}\s*from\s*"\.\/([^"]+)"/gm;
+  let m;
+  while ((m = re.exec(chartsIndexSrc))) {
+    const file = m[2];
+    if (!/^[A-Z]/.test(file)) continue; // skip ./theme, ./renderer, etc.
+    for (const name of m[1].split(",").map((s) => s.trim()).filter(Boolean)) {
+      map.set(name, file);
+    }
+  }
+  return map;
+}

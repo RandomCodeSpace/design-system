@@ -20,7 +20,7 @@
  */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { extractInterfaces, extractTypeAliases, parseRuntimeExports } from "./parse-source.mjs";
+import { extractInterfaces, extractTypeAliases, parseRuntimeExports, parseChartsExports } from "./parse-source.mjs";
 import { generateDemos } from "./component-examples.mjs";
 
 const root = process.cwd();
@@ -30,6 +30,10 @@ mkdirSync(outDir, { recursive: true });
 const componentsDts = readFileSync(join(root, "src/components.ts"), "utf8");
 const tokensTs = readFileSync(join(root, "src/tokens.ts"), "utf8");
 const indexTsx = readFileSync(join(root, "src/index.tsx"), "utf8");
+const chartsIndexTs = (() => {
+  try { return readFileSync(join(root, "src/charts/index.ts"), "utf8"); }
+  catch { return ""; }
+})();
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 
 const SITE_BASE = "https://randomcodespace.github.io/design-system";
@@ -37,6 +41,7 @@ const PKG_NPM = pkg.name; // @ossrandom/design-system
 const PKG_GHP = "@randomcodespace/design-system";
 
 const runtimeExports = parseRuntimeExports(indexTsx);
+const chartExports = parseChartsExports(chartsIndexTs);
 const interfaces = extractInterfaces(componentsDts);
 const componentTypeAliases = extractTypeAliases(componentsDts);
 const tokenTypeAliases = extractTypeAliases(tokensTs);
@@ -56,16 +61,34 @@ const CATEGORIES = [
   { id: "navigation", label: "Navigation",        srcFiles: ["navigation"] },
   { id: "feedback",   label: "Feedback",          srcFiles: ["feedback"] },
   { id: "content",    label: "Content",           srcFiles: ["code", "chat"] },
+  { id: "charts",     label: "Charts (subpath)",  charts: true },
 ];
+
+// Chart peer-deps surface in llms-full so AI agents know what to install.
+const CHART_PEER_DEPS = {
+  Chart:       ["uplot (canvas, default)", "@deck.gl/core + @deck.gl/layers (webgl/webgpu)"],
+  Sparkline:   [],
+  Donut:       [],
+  RadialGauge: [],
+  UptimeBar:   [],
+  Treemap:     ["d3-hierarchy"],
+  ServiceMap:  ["cytoscape + cytoscape-cose-bilkent (canvas)", "@deck.gl/core + @deck.gl/layers + d3-force (webgl)"],
+};
+
+function isChart(name) { return chartExports.has(name); }
 function categoryForExport(name) {
+  if (isChart(name)) return CATEGORIES.find((c) => c.id === "charts");
   const f = runtimeExports.get(name);
-  return f ? CATEGORIES.find((c) => c.srcFiles.includes(f)) : null;
+  return f ? CATEGORIES.find((c) => !c.charts && c.srcFiles?.includes(f)) : null;
 }
 
 const exportsByCategory = new Map(CATEGORIES.map((c) => [c.id, []]));
 for (const [name] of runtimeExports) {
   const cat = categoryForExport(name);
   if (cat) exportsByCategory.get(cat.id).push(name);
+}
+for (const [name] of chartExports) {
+  exportsByCategory.get("charts").push(name);
 }
 
 function findPropsFor(name) {
@@ -74,13 +97,14 @@ function findPropsFor(name) {
 
 // ─── llms.txt — concise per spec ──────────────────────────────────────
 function renderLlmsTxt() {
-  const total = runtimeExports.size;
+  const total = runtimeExports.size + chartExports.size;
   const cats = CATEGORIES.filter((c) => exportsByCategory.get(c.id).length > 0);
 
   let out = "";
   out += `# RandomCodeSpace Design System\n\n`;
-  out += `> Strongly-typed React component library — ${total} components across ${cats.length} categories. `;
-  out += `Inter on Cod Gray, Signal Red accent, single CSS file, zero runtime deps. `;
+  out += `> Strongly-typed React component library — ${total} components across ${cats.length} categories `;
+  out += `(${runtimeExports.size} core + ${chartExports.size} charts). `;
+  out += `Bricolage Grotesque on Cod Gray, Signal Red accent, single CSS file, zero core runtime deps. `;
   out += `Built for self-hosted developer tooling.\n\n`;
 
   out += `## Install\n\n`;
@@ -89,10 +113,14 @@ function renderLlmsTxt() {
   out += `# or, from GitHub Packages mirror (different scope):\n`;
   out += `npm install ${PKG_GHP}\n`;
   out += `\`\`\`\n\n`;
+  out += `Charts ship at the \`${PKG_NPM}/charts\` subpath and pull heavier peer deps `;
+  out += `(\`uplot\`, \`d3-hierarchy\`, \`cytoscape\`, \`@deck.gl/core\` + \`@deck.gl/layers\`). `;
+  out += `Install only the ones the charts you render require — see the Charts section below.\n\n`;
 
   out += `## Usage\n\n`;
   out += `\`\`\`tsx\n`;
   out += `import { ThemeProvider, Button, toast } from "${PKG_NPM}";\n`;
+  out += `import { Chart, ServiceMap } from "${PKG_NPM}/charts";\n`;
   out += `import "${PKG_NPM}/styles.css";\n\n`;
   out += `<ThemeProvider mode="light">\n`;
   out += `  <Button onClick={() => toast.show({ title: "Saved" })}>Save</Button>\n`;
@@ -103,6 +131,9 @@ function renderLlmsTxt() {
   for (const cat of cats) {
     const items = exportsByCategory.get(cat.id);
     out += `### ${cat.label}\n\n`;
+    if (cat.charts) {
+      out += `Subpath: \`${PKG_NPM}/charts\`\n\n`;
+    }
     for (const name of items) {
       const iface = findPropsFor(name);
       const isHook = HOOKS.has(name);
@@ -177,10 +208,24 @@ function renderLlmsFullTxt() {
 function renderComponent(name) {
   const iface = findPropsFor(name);
   const isHook = HOOKS.has(name);
-  const srcFile = runtimeExports.get(name);
+  const chart = isChart(name);
+  const srcPath = chart
+    ? `src/charts/${chartExports.get(name)}.tsx`
+    : `src/components/${runtimeExports.get(name)}.tsx`;
+  const importPath = chart ? `${PKG_NPM}/charts` : PKG_NPM;
   let out = "";
   out += `### ${name}${iface?.generics || ""}\n`;
-  out += `Source: \`src/components/${srcFile}.tsx\` · ${isHook ? "hook" : "component"}\n\n`;
+  out += `Source: \`${srcPath}\` · ${isHook ? "hook" : "component"}\n`;
+  out += `Import: \`import { ${name} } from "${importPath}";\`\n`;
+  if (chart) {
+    const deps = CHART_PEER_DEPS[name] || [];
+    if (deps.length === 0) {
+      out += `Peer deps: none (zero-dep render path)\n`;
+    } else {
+      out += `Peer deps (install on demand): ${deps.map((d) => `\`${d}\``).join(", ")}\n`;
+    }
+  }
+  out += `\n`;
 
   if (iface) {
     if (iface.extends) {

@@ -11,8 +11,8 @@
  *   <outDir>/dist/styles.css            (concat colors_and_type.css + src/styles.css)
  *   <outDir>/docs/index.html            (component reference, card grid)
  *   <outDir>/docs/docs.css              (per-component page styles)
- *   <outDir>/docs/runner.js             (Babel + render helper)
- *   <outDir>/docs/playground/index.html (editable playground)
+ *   <outDir>/docs/runner.js             (render helper — no in-browser compiler)
+ *   <outDir>/docs/playground/index.html (editable playground; uses Babel)
  *   <outDir>/docs/<Name>/index.html     (one per runtime export)
  *
  * Source of truth (parsed from the repo):
@@ -22,12 +22,16 @@
  *   src/charts/index.ts  (charts subpath exports — "Charts" category)
  *
  * Every component page renders the live React component via the IIFE
- * bundle plus Babel-standalone. There are no hand-written HTML cards.
+ * bundle. JSX in @example blocks is pre-transformed to JS at build
+ * time via esbuild, so component pages do not load Babel-standalone in
+ * the browser. The editable playground is the one exception — it keeps
+ * Babel-standalone since users edit JSX live there.
  *
- * Pure Node built-ins.
+ * Pure Node built-ins + esbuild (already a dev-dep for the IIFE bundle).
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { transformSync } from "esbuild";
 import { join, resolve } from "node:path";
 import { generateDemos } from "./component-examples.mjs";
 import { extractInterfaces, extractTypeAliases, parseRuntimeExports, parseChartsExports } from "./parse-source.mjs";
@@ -629,9 +633,34 @@ html { scroll-behavior: smooth; }
 `;
 }
 
+// Pre-transform a JSX expression string into a JS expression at build
+// time. The runner splices this into "return (...)" inside a factory
+// scoped to `var { React, Button, ... } = R`, so the transformed output
+// references React.createElement / React.Fragment, both of which the
+// bundle exports. No Babel-standalone needed in the browser.
+function compileDemo(jsxCode) {
+  if (!jsxCode) return "";
+  // esbuild requires statement-shape input — wrap as `(EXPR)` so the
+  // single JSX expression survives as a single expression on output.
+  const result = transformSync(`(${jsxCode})`, {
+    loader: "tsx",
+    jsx: "transform",
+    jsxFactory: "React.createElement",
+    jsxFragment: "React.Fragment",
+    target: "es2020",
+    minify: false,
+  });
+  // esbuild emits the expression as a statement: "(...);\n". Strip the
+  // trailing punctuation so the result drops cleanly into "return ( … )".
+  return result.code.replace(/;\s*$/, "").trimEnd();
+}
+
 function renderRunner() {
-  return `// Shared runtime for component live previews, the playground, and the
-// charts subpath. Loaded after the IIFE bundle(s) and Babel-standalone.
+  return `// Shared runtime for component live previews and chart docs pages.
+// Loaded after the IIFE bundle(s). Demo code is pre-transformed to JS
+// at build time, so this runner only needs to eval and render — there
+// is no JSX compiler in the page. (The editable playground keeps
+// Babel-standalone because it transforms whatever the user types.)
 //
 //   runExample(code, targetId)        — core components, uses window.RCS
 //   runChartExample(code, targetId)   — chart components, uses window.RCSCharts
@@ -642,7 +671,7 @@ function renderRunner() {
   function showError(target, msg) {
     target.innerHTML = '<div class="err">' + escapeHtml(msg) + '</div>';
   }
-  function transformExample(R, code) {
+  function buildFactorySrc(R, code) {
     var names = Object.keys(R || {}).filter(function (n) { return n !== "default"; });
     return (
       "(function() { var R = arguments[0]; " +
@@ -655,12 +684,9 @@ function renderRunner() {
     var target = document.getElementById(targetId || "preview");
     if (!target) return;
     if (!global.RCS) return showError(target, "window.RCS not loaded");
-    if (!global.Babel) return showError(target, "Babel standalone not loaded");
-    var wrapped = transformExample(global.RCS, code);
-    var transformed, factory, result;
-    try { transformed = global.Babel.transform(wrapped, { presets: ["env", "react"] }).code; }
-    catch (e) { return showError(target, "Compile error: " + (e && e.message || e)); }
-    try { factory = (0, eval)(transformed); result = factory(global.RCS); }
+    var src = buildFactorySrc(global.RCS, code);
+    var factory, result;
+    try { factory = (0, eval)(src); result = factory(global.RCS); }
     catch (e) { return showError(target, "Runtime error: " + (e && e.message || e)); }
     try {
       var R = global.RCS;
@@ -675,12 +701,9 @@ function renderRunner() {
     var target = document.getElementById(targetId || "preview");
     if (!target) return;
     if (!global.RCSCharts) return showError(target, "window.RCSCharts not loaded");
-    if (!global.Babel) return showError(target, "Babel standalone not loaded");
-    var wrapped = transformExample(global.RCSCharts, code);
-    var transformed, factory, result;
-    try { transformed = global.Babel.transform(wrapped, { presets: ["env", "react"] }).code; }
-    catch (e) { return showError(target, "Compile error: " + (e && e.message || e)); }
-    try { factory = (0, eval)(transformed); result = factory(global.RCSCharts); }
+    var src = buildFactorySrc(global.RCSCharts, code);
+    var factory, result;
+    try { factory = (0, eval)(src); result = factory(global.RCSCharts); }
     catch (e) { return showError(target, "Runtime error: " + (e && e.message || e)); }
     try {
       var R = global.RCSCharts;
@@ -1072,14 +1095,20 @@ function renderComponentPage(name) {
   // The runner functions themselves verify their bundle is loaded (window.RCS
   // for runExample, window.RCSCharts for runChartExample) and surface the
   // failure inline, so we only need to guard against runner.js itself failing.
+  // JSX is pre-transformed at build time via compileDemo() — the runtime
+  // string passed to runFn is plain JS (References React.createElement /
+  // React.Fragment, both destructured from R inside the runner factory).
+  // The displayed code panel and copy-button still receive the original JSX
+  // via DEMO_CODES below.
   const runFn = chart ? "runChartExample" : "runExample";
-  const runCalls = demos.map((d, i) => `${runFn}(${JSON.stringify(d.code)}, "demo-render-${i}");`).join("\n      ");
+  const compiledDemos = demos.map((d) => compileDemo(d.code));
+  const runCalls = compiledDemos.map((js, i) => `${runFn}(${JSON.stringify(js)}, "demo-render-${i}");`).join("\n      ");
   const codeJson = JSON.stringify(demos.map((d) => d.code));
+  const bundleGlobal = chart ? "window.RCSCharts" : "window.RCS";
 
   const tail = `
   <script src="../bundle/rcs.iife.js"></script>${chart ? `
   <script src="../bundle/rcs-charts.iife.js"></script>` : ""}
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
   <script src="../runner.js"></script>
   <script>
     (function () {
@@ -1149,8 +1178,9 @@ function renderComponentPage(name) {
           li.style.display = t.indexOf(q) >= 0 ? '' : 'none';
         });
       });
-      // Run demos as soon as bundle + babel are ready.
-      if (window.RCS && window.Babel) runAll();
+      // Run demos as soon as the IIFE bundle for this page has loaded.
+      // No JSX compiler needed in the browser — demos are pre-transformed.
+      if (${bundleGlobal}) runAll();
       else window.addEventListener('load', runAll);
     })();
   </script>`;
